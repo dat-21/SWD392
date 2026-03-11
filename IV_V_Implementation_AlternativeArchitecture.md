@@ -407,12 +407,12 @@ The general mapping pattern from UML Design to Node.js/Express implementation fo
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                   UML Class Diagram                         │
-│  ┌───────────┐  ┌──────────────┐  ┌──────────────────────┐ │
-│  │  Entity    │  │  Service     │  │  Controller          │ │
+│  ┌───────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │  Entity    │  │  Service     │  │  Controller         │ │
 │  │  (Booking, │  │  Interface   │  │  (BookingController) │ │
 │  │   Review)  │  │  (IBooking   │  │                      │ │
 │  │            │  │   Service)   │  │                      │ │
-│  └───────────┘  └──────────────┘  └──────────────────────┘ │
+│  └───────────┘  └──────────────┘  └──────────────────────┘  │
 │       ↓                ↓                    ↓               │
 │  ┌─────────────────────────────────────────────────────────┐│
 │  │              Node.js / Express Code                     ││
@@ -510,12 +510,12 @@ The software architecture is redesigned as shown below.
 │                                           │ HTTPS                   │
 │  <<WebBrowser>>          HTTPS            ▼                         │
 │  <<Client>>          ──────────►  ┌───────────────┐   ADO/Mongoose  │
-│  MC                               │ <<Service>>   │──────────►     │
-│                                   │  MCHub        │    ┌──────────┐│
-│                                   │  Service      │    │<<DB>>    ││
-│  <<WebBrowser>>          HTTPS    │  (Express API)│    │ MongoDB  ││
-│  <<Client>>          ──────────►  └───────────────┘    │ Atlas    ││
-│  Admin                        ▲           │            └──────────┘│
+│  MC                               │ <<Service>>   │──────────►      │
+│                                   │  MCHub        │    ┌──────────┐ │
+│                                   │  Service      │    │<<DB>>    │ │
+│  <<WebBrowser>>          HTTPS    │  (Express API)│    │ MongoDB  │ │
+│  <<Client>>          ──────────►  └───────────────┘    │ Atlas    │ │
+│  Admin                        ▲           │            └──────────┘ │
 │                               │           │                         │
 │                         HTTPS │     HTTPS │                         │
 │  <<WebBrowser>>    ───────────┘           ▼                         │
@@ -533,6 +533,7 @@ The software architecture is redesigned as shown below.
 ```
 
 **Description:**
+
 - **MCHub Customer Site** (React.js Web App): Serves Customers and MCs via web browser
 - **MCHub Admin Site** (React.js Web App): Serves Admin users for management
 - **MCHub Service** (Express.js API): A single centralized RESTful service that exposes all business logic through APIs (`/api/v1/*`)
@@ -579,6 +580,7 @@ All client applications (Web Customer, Web Admin, Mobile App) communicate with t
 ```
 
 **Key Relationships:**
+
 - Customer (1) → MCHub Customer Site (Web)
 - MC (1) → MCHub Customer Site (Web)
 - Admin (1) → MCHub Admin Site (Web)
@@ -619,13 +621,14 @@ All client applications (Web Customer, Web Admin, Mobile App) communicate with t
 ```
 
 **Interaction Flow:**
+
 1. **Customer** sends HTTP Request to MCHub Customer Site
 2. MCHub Customer Site returns HTTP Response (rendered UI)
 3. **MC** sends HTTP Request to MCHub Customer Site (shared web app)
 4. MCHub Customer Site returns HTTP Response
 5. All web clients send API requests to **MCHub Service** (Express.js)
 6–8. MCHub Service queries **MongoDB Atlas** and returns responses
-9. **Mobile App** directly calls the same MCHub Service via HTTPS
+6. **Mobile App** directly calls the same MCHub Service via HTTPS
 
 ---
 
@@ -733,6 +736,7 @@ The system is decomposed into **6 independent microservices**, each responsible 
 ```
 
 **Key Relationships:**
+
 - All clients (Customer, MC, Admin, Mobile) → **MCHub Service Gateway** (1 entry point)
 - MCHub Service Gateway → **Service Register** (discovers service locations)
 - MCHub Service Gateway → Each **Microservice** (routes requests by path/domain)
