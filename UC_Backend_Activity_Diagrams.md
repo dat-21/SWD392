@@ -229,7 +229,7 @@ flowchart TD
 
     subgraph System [System Side / Backend API]
         S1(adminController.getAllUsers receives Request)
-        S2(User Model queries '.find()' to Database)
+        S2(User Model executes find query on Database)
         S3{Extraction process<br/>successful?}
         S4(Report Error / System Fail - HTTP 400)
         S5(Return Users Array Data - HTTP 200)
@@ -247,9 +247,7 @@ flowchart TD
 
 ---
 
-## UC33 & UC34 - Lock/Unlock Account & Verify MC
-
-*Both Lock/Unlock account and MC Account Verification use the same User status update API flow in Backend.*
+## UC33 - Lock/Unlock Account
 
 **API Endpoint:** `PATCH /api/v1/admin/users/:id`
 
@@ -260,18 +258,59 @@ flowchart TD
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
     subgraph Admin [Admin Side / Admin Client]
-        Start((Start)) --> U1(Click Verify Approval or Lock/Unlock Account button)
+        Start((Start)) --> U1(Toggle Lock/Unlock Account switch in Dashboard)
     end
 
     subgraph System [System Side / Backend API]
         S1(adminController.updateUserStatus gets Request)
-        S2(Extract isActive, isVerified parameters from request)
+        S2(Extract 'isActive' parameter from request body)
         S3(User Model executes findByIdAndUpdate on Database)
         S4{Database Operation<br/>successful?}
         S5(Return DB Error - HTTP 400)
         S6{Check<br/>if User exists?}
         S7(Return 'User not found' error - HTTP 404)
-        S8(Return new Database User object - HTTP 200)
+        S8(Return updated User object - HTTP 200)
+    end
+
+    U1 --> S1
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 -- No --> S5
+    S4 -- Yes --> S6
+    S6 -- No --> S7
+    S6 -- Yes --> S8
+
+    S5 --> End1((End))
+    S7 --> End1
+    S8 --> End2((End))
+```
+
+---
+
+## UC34 - Verify MC
+
+**API Endpoint:** `PATCH /api/v1/admin/users/:id`
+
+```mermaid
+flowchart TD
+    style Start fill:#333,stroke:#333,stroke-width:2px,color:#fff
+    style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
+    style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
+
+    subgraph Admin [Admin Side / Admin Client]
+        Start((Start)) --> U1(Click 'Verify MC Account' button on MC profile)
+    end
+
+    subgraph System [System Side / Backend API]
+        S1(adminController.updateUserStatus gets Request)
+        S2(Extract 'isVerified' parameter from request body)
+        S3(User Model executes update query on Database)
+        S4{Database Operation<br/>successful?}
+        S5(Return DB Error - HTTP 400)
+        S6{Check<br/>if Target exists?}
+        S7(Return 'User not found' error - HTTP 404)
+        S8(Return verified User object - HTTP 200)
     end
 
     U1 --> S1
@@ -306,7 +345,7 @@ flowchart TD
 
     subgraph System [System Side / Backend API]
         S1(adminController.getAllBookings processes Request)
-        S2(Booking Model queries '.find().populate('mc').populate('client')')
+        S2(Booking Model queries database with mc and client population)
         S3{Database Query<br/>successful?}
         S4(Report Server Error - HTTP 400)
         S5(Return populated Bookings List - HTTP 200)
@@ -324,5 +363,79 @@ flowchart TD
 
 ---
 
-**Note about UC37 (Resolve Disputes):** 
-The dispute management feature (ticketing, disputes API) has not currently been developed in the backend source code (`adminController.js`, `adminRoutes.js`), so a standard Diagram cannot be established for the actual processing flow.
+## UC37 - Resolve Disputes
+
+*Description: (Theoretical Design) Admin evaluates communication logs/evidence and dictates resolution decisions. This process finalizes the dispute and cascades the outcome to the booking status.*
+
+**API Endpoint:** `POST /api/v1/admin/disputes/:id/resolve` (Theoretical)
+
+```mermaid
+flowchart TD
+    style Start fill:#333,stroke:#333,stroke-width:2px,color:#fff
+    style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
+    style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
+
+    subgraph Admin [Admin Side / Admin Client]
+        Start((Start)) --> U1(Review Dispute evidence & submit final Decision)
+    end
+
+    subgraph System [System Side / Backend API]
+        S1(disputeController.resolveDispute receives Request with decision)
+        S2(Call DisputeService.processResolution)
+        S3(DisputeRepository updates dispute to 'Resolved' status in Database)
+        S4{Dispute Update<br/>successful?}
+        S5(Return Database Error - HTTP 400)
+        S6{Decision affects<br/>Booking status?}
+        S7(Booking Model updates related Booking status)
+        S8(Skip Booking Update)
+        S9(Return Success Response with updated data - HTTP 200)
+    end
+
+    U1 --> S1
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 -- No --> S5
+    S4 -- Yes --> S6
+    S6 -- Yes --> S7
+    S6 -- No --> S8
+    S7 --> S9
+    S8 --> S9
+
+    S5 --> End1((End))
+    S9 --> End2((End))
+```
+
+---
+
+## UC38 - View All Transactions
+
+**API Endpoint:** `GET /api/v1/admin/transactions`
+
+```mermaid
+flowchart TD
+    style Start fill:#333,stroke:#333,stroke-width:2px,color:#fff
+    style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
+    style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
+
+    subgraph Admin [Admin Side / Admin Client]
+        Start((Start)) --> U1(Access Financial / Transactions Management page)
+    end
+
+    subgraph System [System Side / Backend API]
+        S1(adminController.getAllTransactions processes Request)
+        S2(Transaction Model queries database with mc and client population)
+        S3{Database Query<br/>successful?}
+        S4(Report Server Error - HTTP 400)
+        S5(Return list of all system transactions - HTTP 200)
+    end
+
+    U1 --> S1
+    S1 --> S2
+    S2 --> S3
+    S3 -- No --> S4
+    S3 -- Yes --> S5
+
+    S4 --> End1((End))
+    S5 --> End2((End))
+```

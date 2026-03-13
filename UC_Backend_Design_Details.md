@@ -510,7 +510,7 @@ sequenceDiagram
 flowchart LR
     Admin((Admin)) -->|1. Click Tab| FE[Admin Frontend]
     FE -->|2. GET Request| Ctrl[adminController]
-    Ctrl -->|3. find() query| DB[(MongoDB)]
+    Ctrl -->|3. execute find query| DB[(MongoDB)]
     DB -->|4. Array of Users| Ctrl
     Ctrl -->|5. JSON Response| FE
     FE -->|6. Render DataGrid| Admin
@@ -554,7 +554,7 @@ flowchart TB
 stateDiagram-v2
     [*] --> ViewingUser: Admin opens user row
     ViewingUser --> ModifyingStatus: Admin toggles "Lock Account" switch
-    ModifyingStatus --> Requesting: PATCH /admin/users/:id {isActive: false}
+    ModifyingStatus --> Requesting: PATCH /admin/users/:id (isActive=false)
     Requesting --> Saved: Success (Account Banned)
     Requesting --> Failed: Unsuccessful execution
     Failed --> ViewingUser: Return
@@ -628,7 +628,7 @@ stateDiagram-v2
     [*] --> Unverified: New MC registered
     Unverified --> Appraising: Admin reviews submitted info
     Appraising --> Confirming: Admin clicks "Verify Account"
-    Confirming --> Processing: PATCH /admin/users/:id {isVerified: true}
+    Confirming --> Processing: PATCH /admin/users/:id (isVerified=true)
     Processing --> Success: Successfully Approved
     Processing --> Failed: Database Error
     Failed --> Appraising: Re-retry
@@ -854,5 +854,74 @@ flowchart TB
 
     FE -->|POST: resolve| Route
     Route --> Ctrl --> Svc --> Repo --> Model --> DB
+```
+
+---
+
+## UC38 - View All Transactions
+
+### 1. Use Case Description
+**Name:** View All Transactions
+**Actor:** Admin
+**Description:** Admin monitors all financial movements on the platform, including deposits, final payments, and theoretical refund transactions.
+
+### 2. State Diagram
+```mermaid
+stateDiagram-v2
+    [*] --> Dashboard: Admin enters Finance section
+    Dashboard --> FetchingData: Trigger GET /api/v1/admin/transactions
+    FetchingData --> Processing: Server query
+    Processing --> Error: Database error
+    Processing --> Loaded: Success
+    Error --> Dashboard: Retry
+    Loaded --> [*]: Display transaction table
+```
+
+### 3. Interaction / Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant FE as Admin Panel
+    participant Ctrl as adminController
+    participant DB as MongoDB (Transaction Model)
+
+    Admin->>FE: Open "Platform Transactions" page
+    FE->>Ctrl: GET /api/v1/admin/transactions
+    Ctrl->>DB: Transaction.find().populate('mc').populate('client')
+    DB-->>Ctrl: Array of populated transactions
+    Ctrl-->>FE: HTTP 200 { data: { transactions } }
+    FE-->>Admin: Render transaction list with IDs, amounts, and statuses
+```
+
+### 4. Integrated Communication Diagram
+```mermaid
+flowchart LR
+    Admin((Admin)) -->|1. View Finance| FE[Admin Frontend]
+    FE -->|2. GET Request| Ctrl[adminController]
+    Ctrl -->|3. find and populate| DB[(MongoDB)]
+    DB -->|4. Results| Ctrl
+    Ctrl -->|5. JSON Response| FE
+    FE -->|6. Render List| Admin
+```
+
+### 5. Detail Design
+- **API Endpoint:** `GET /api/v1/admin/transactions`
+- **Controller:** `adminController.getAllTransactions`
+- **Population:** Automatically retrieves `client` and `mc` name/email details to provide context for each financial record.
+
+### 6. System High-Level Design
+```mermaid
+flowchart TB
+    subgraph ClientLayer ["Client Layer"]
+        FE[Admin Finance UI]
+    end
+    subgraph BusinessLayer ["Business Layer"]
+        Ctrl[adminController]
+    end
+    subgraph DataLayer ["Data Access Layer"]
+        DB[(MongoDB - Transaction Collection)]
+    end
+
+    FE --> Ctrl --> DB
 ```
 
