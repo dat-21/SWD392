@@ -234,9 +234,10 @@ sequenceDiagram
     FE->>Ctrl: GET /api/v1/mc/calendar
     Ctrl->>AvailSvc: getAvailability(userId)
     
-    par Parallel query
+    par Schedule Query
         AvailSvc->>SRepo: findByMCId(userId)
         SRepo->>DB: Schedule.find({mc: userId})
+    and Booking Query
         AvailSvc->>BRepo: findCalendarByMCId(userId)
         BRepo->>DB: Booking.find({mc: userId}).populate()
     end
@@ -324,7 +325,7 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
     actor MC
-    participant FE as Frontend 
+    participant FE as Frontend
     participant Ctrl as mcController
     participant Svc as MCService
     participant Repo as ScheduleRepository
@@ -408,7 +409,7 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
     actor MC
-    participant FE as Frontend 
+    participant FE as Frontend
     participant Ctrl as availabilityController
     participant Svc as AvailabilityService
     participant Repo as ScheduleRepository
@@ -764,20 +765,94 @@ flowchart TB
 ### 1. Use Case Description
 **Name:** Resolve Disputes / Ticketing
 **Actor:** Admin
-**Notice:** *This feature has not materialized in the Node.js backend codebase. There is no `Dispute` or `Ticket` model, and no related `adminController.js` logic implemented in the FPT_S7_NodeJS-Backend repository code.*
-**Description (Theoretical):** Admin receives complaints logged between clients and MCs to evaluate communication logs, and dictate refunds or penalties.
+**Description:** (Theoretical Design - Pending Implementation) Admin receives complaints logged between clients and MCs, evaluates communication logs/evidence, and dictates resolution decisions (e.g., Refunds, Payouts, or Penalties). This process finalizes the dispute and cascades the outcome to the booking status.
 
 ### 2. State Diagram
-*(Missing in Backend Codebase. Must be implemented via Issue backlog).*
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: Dispute submitted by Client/MC
+    Pending --> UnderReview: Admin claims and starts reviewing
+    UnderReview --> WaitingEvidence: Admin requests additional evidence
+    WaitingEvidence --> UnderReview: User submits evidence
+    UnderReview --> Resolved: Admin enforces final decision
+    Resolved --> [*]: Dispute Closed
+```
 
 ### 3. Interaction / Sequence Diagram
-*(Missing in Backend Codebase. Request development of Disputes route before graphing).*
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant FE as Admin Panel
+    participant Ctrl as disputeController
+    participant Svc as DisputeService
+    participant Repo as DisputeRepository
+    participant DB as MongoDB
+
+    Admin->>FE: Review details & Click "Resolve Dispute" (Submit Decision)
+    FE->>Ctrl: POST /api/v1/admin/disputes/:id/resolve (decision)
+    Ctrl->>Svc: processResolution(disputeId, decision)
+    Svc->>Repo: updateDisputeStatus(disputeId, 'Resolved', decision)
+    Repo->>DB: Dispute.findByIdAndUpdate(disputeId, ...)
+    DB-->>Repo: disputeDoc
+    Repo-->>Svc: updatedDispute
+    
+    opt If decision mandates Booking status change (e.g., Refunded)
+        Svc->>DB: Booking.findByIdAndUpdate(bookingId, { status: decisionState })
+        DB-->>Svc: updatedBooking
+    end
+    
+    Svc-->>Ctrl: executionResult
+    Ctrl-->>FE: HTTP 200 { status: 'success', data }
+    FE-->>Admin: Render Success state & updated data
+```
 
 ### 4. Integrated Communication Diagram
-*(Missing in Backend Codebase. Cannot evaluate communication flows).*
+```mermaid
+flowchart LR
+    Admin((Admin)) -->|1. Submit Decision| FE[Admin Frontend]
+    FE -->|2. POST request| Ctrl[disputeController]
+    Ctrl -->|3. process resolution| Svc[DisputeService]
+    Svc -->|4. execute update| Repo[DisputeRepository]
+    Repo -->|5. update status| DB[(MongoDB)]
+    DB -->|6. return doc| Repo
+    Repo -->|7. return doc| Svc
+    Svc -->|8. update Booking status| DB
+    DB -->|9. return booking| Svc
+    Svc -->|10. result| Ctrl
+    Ctrl -->|11. JSON response| FE
+    FE -->|12. Render UI| Admin
+```
 
 ### 5. Detail Design
-*(Missing in Backend Codebase. No endpoints or Database models discovered).*
+- **API Endpoint:** `POST /api/v1/admin/disputes/:id/resolve` (Theoretical)
+- **Controller:** `disputeController.resolveDispute(req, res)`
+- **Dependencies:** Uses `DisputeService` to handle complex multi-model transactions.
+- **Database Model:** 
+  - `Dispute` model outlining `bookingId`, `reportedBy`, `reason`, `evidenceUrls`, `status: ['Pending', 'UnderReview', 'Resolved']`, and `decision`.
+  - Links securely to `Booking` model to transition final outcomes.
 
 ### 6. System High-Level Design
-*(Missing in Backend Codebase).*
+```mermaid
+flowchart TB
+    subgraph ClientLayer ["Client Layer"]
+        FE[Admin Dashboard UI]
+    end
+    subgraph APILayer ["API Layer"]
+        Route[Admin/Dispute Routes]
+    end
+    subgraph BusinessLayer ["Business Layer"]
+        Ctrl[disputeController]
+        Svc[DisputeService]
+    end
+    subgraph DataLayer ["Data Access Layer"]
+        Repo[DisputeRepository]
+        Model[Dispute / Booking Models]
+    end
+    subgraph StorageLayer ["Storage Layer"]
+        DB[(MongoDB)]
+    end
+
+    FE -->|POST: resolve| Route
+    Route --> Ctrl --> Svc --> Repo --> Model --> DB
+```
+
