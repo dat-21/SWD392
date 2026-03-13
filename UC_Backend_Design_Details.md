@@ -132,8 +132,9 @@ stateDiagram-v2
 sequenceDiagram
     actor MC
     participant FE as Frontend App
-    participant Cloud as Cloud Storage (S3/Cloudinary)
-    participant Ctrl as mcController
+    participant Cloud as Cloud Storage (S3 / Cloudinary)
+    participant Ctrl as MCController
+    participant Svc as MCService
     participant Repo as MCProfileRepository
     participant DB as MongoDB
 
@@ -141,12 +142,15 @@ sequenceDiagram
     FE->>Cloud: POST Media File (Direct SDK Upload)
     Cloud-->>FE: Return file URL
     FE->>Ctrl: PUT /api/v1/mc/profile { media: [{ url: "...", type: "video" }] }
-    Ctrl->>Repo: udpateByUserId() (via MCService mapping showreels)
-    Repo->>DB: Update `showreels` array field
-    DB-->>Repo: success
-    Repo-->>Ctrl: updatedProfile
-    Ctrl-->>FE: HTTP 200 OK
-    FE-->>MC: Preview newly uploaded photo/video
+    Ctrl->>Svc: updateProfile()
+    Svc->>Svc: Process business logic & map media into showreels
+    Svc->>Repo: updateByUserId()
+    Repo->>DB: Update showreels array field
+    DB-->>Repo: Returns success
+    Repo-->>Svc: Returns updated profile
+    Svc-->>Ctrl: Returns updated profile
+    Ctrl-->>FE: HTTP 200 OK (updated profile data)
+    FE-->>MC: Display preview of the newly uploaded photo/video
 ```
 
 ### 4. Integrated Communication Diagram
