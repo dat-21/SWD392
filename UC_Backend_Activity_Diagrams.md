@@ -1,33 +1,33 @@
-# Biểu Đồ Hoạt Động Cấu Trúc Trắc Dọc (Activity Diagrams with Swimlanes)
+# Vertical Structure Activity Diagrams (with Swimlanes)
 
-Dựa trên cấu trúc Backend Node.js thực tế của hệ thống (`controllers`, `services`, `repositories`, `models`), dưới đây là các biểu đồ Activity Diagram được phân luồng (swimlane) rõ ràng giữa **Phía Người Dùng (Client / Guest / MC / Admin)** và **Phía Hệ Thống (System / Backend API)**. 
+Based on the actual Backend Node.js structure of the system (`controllers`, `services`, `repositories`, `models`), below are the Activity Diagrams with clear swimlanes between the **User Side (Client / Guest / MC / Admin)** and the **System Side (System / Backend API)**. 
 
 ---
 
-## UC19 - Update MC Profile (Cập nhật hồ sơ MC)
+## UC19 - Update MC Profile
 
 **API Endpoint:** `PUT /api/v1/mc/profile`
 
 ```mermaid
 flowchart TD
-    %% Styling cho Start/End
+    %% Styling for Start/End
     style Start fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     
-    subgraph Client [Phía Người Dùng / MC Client]
-        Start((Bắt đầu)) --> U1(Điền thông tin và nhấn Lưu form Update Profile)
+    subgraph Client [User Side / MC Client]
+        Start((Start)) --> U1(Fill out information and click Save Profile Form)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(mcController.updateProfile nhận Request)
-        S2(MCProfileDTO.fromOnboardingRequest validate & sanitize dữ liệu)
-        S3(Gọi MCService.updateProfile xử lý nghiệp vụ)
-        S4(MCProfileRepository.updateByUserId tương tác Database)
-        S5{Cập nhật DB<br/>thành công?}
-        S6(Trả về lỗi Validation/DB Error - HTTP 400)
-        S7(Transform dữ liệu thành MCProfileDTO mới)
-        S8(Trả về Response thành công - HTTP 200)
+    subgraph System [System Side / Backend API]
+        S1(mcController.updateProfile receives Request)
+        S2(MCProfileDTO.fromOnboardingRequest validates & sanitizes data)
+        S3(Call MCService.updateProfile to handle business logic)
+        S4(MCProfileRepository.updateByUserId interacts with Database)
+        S5{Database Update<br/>successful?}
+        S6(Return Validation/DB Error - HTTP 400)
+        S7(Transform data into a new MCProfileDTO)
+        S8(Return Success Response - HTTP 200)
     end
 
     U1 --> S1
@@ -35,19 +35,19 @@ flowchart TD
     S2 --> S3
     S3 --> S4
     S4 --> S5
-    S5 -- Không --> S6
-    S5 -- Có --> S7
+    S5 -- No --> S6
+    S5 -- Yes --> S7
     S7 --> S8
     
-    S6 --> End1((Kết thúc))
-    S8 --> End2((Kết thúc))
+    S6 --> End1((End))
+    S8 --> End2((End))
 ```
 
 ---
 
-## UC20 - Upload Media (Tải lên Media/Showreel)
+## UC20 - Upload Media (Showreels)
 
-*Lưu ý: Luồng Upload Media thực tế được Client xử lý đưa lên Cloud Storage trước, sau đó gửi URL về Backend thông qua API update Profile.*
+*Note: The actual Media Upload flow is handled by the Client uploading directly to Cloud Storage first, then sending the URL to the Backend via the update Profile API.*
 
 **API Endpoint:** `PUT /api/v1/mc/profile`
 
@@ -57,20 +57,20 @@ flowchart TD
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
-    subgraph Client [Phía Người Dùng / MC Client]
-        Start((Bắt đầu)) --> U1(Tải file media trực tiếp lên Cloud Storage bằng SDK)
-        U1 --> U2(Nhận URL trả về từ Cloud Storage)
-        U2 --> U3(Gửi form Update Profile kèm URL trong biến 'media')
+    subgraph Client [User Side / MC Client]
+        Start((Start)) --> U1(Upload media file directly to Cloud Storage via SDK)
+        U1 --> U2(Receive returned URL from Cloud Storage)
+        U2 --> U3(Send Update Profile form with URL in 'media' variable)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(mcController.updateProfile nhận Request chứa URL data)
-        S2(MCProfileDTO ánh xạ URL map vào mảng 'showreels')
-        S3(Gọi MCService.updateProfile xử lý lưu)
-        S4(MCProfileRepository.updateByUserId lưu URL vào Database)
-        S5{Lưu CSDL<br/>thành công?}
-        S6(Trả về Error - HTTP 400)
-        S7(Trả về cập nhật thành công - HTTP 200)
+    subgraph System [System Side / Backend API]
+        S1(mcController.updateProfile receives Request containing URL data)
+        S2(MCProfileDTO maps URL into 'showreels' array)
+        S3(Call MCService.updateProfile to process saving)
+        S4(MCProfileRepository.updateByUserId saves URL to Database)
+        S5{Database Save<br/>successful?}
+        S6(Return Error - HTTP 400)
+        S7(Return successful update - HTTP 200)
     end
 
     U3 --> S1
@@ -78,16 +78,16 @@ flowchart TD
     S2 --> S3
     S3 --> S4
     S4 --> S5
-    S5 -- Không --> S6
-    S5 -- Có --> S7
+    S5 -- No --> S6
+    S5 -- Yes --> S7
 
-    S6 --> End1((Kết thúc))
-    S7 --> End2((Kết thúc))
+    S6 --> End1((End))
+    S7 --> End2((End))
 ```
 
 ---
 
-## UC21 - View Schedule (Xem lịch trình cá nhân)
+## UC21 - View Schedule (Personal Working Schedule)
 
 **API Endpoint:** `GET /api/v1/mc/calendar`
 
@@ -97,42 +97,42 @@ flowchart TD
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
-    subgraph Client [Phía Người Dùng / MC Client]
-        Start((Bắt đầu)) --> U1(Truy cập trang Calendar / Dashboard)
+    subgraph Client [User Side / MC Client]
+        Start((Start)) --> U1(Access Calendar / Dashboard page)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(mcController.getCalendar xử lý Request)
-        S2(Gọi MCService.getCalendar -> AvailabilityService.getAvailability)
-        S3(MCProfileRepository.findByIdentifier xác nhận MC)
-        S4{Profile MC<br/>tồn tại?}
-        S5(Trả về lỗi "MC profile not found" - HTTP 400)
-        S6(Song song: Query ScheduleRepository & BookingRepository)
-        S7{Truy vấn DB<br/>thành công?}
-        S8(Báo lỗi hệ thống - HTTP 400)
-        S9(Merge / Tính toán / Phân loại Schedule & Booking)
-        S10(Sắp xếp theo ngày và trả về mảng Calendar Data - HTTP 200)
+    subgraph System [System Side / Backend API]
+        S1(mcController.getCalendar processes Request)
+        S2(Call MCService.getCalendar -> AvailabilityService.getAvailability)
+        S3(MCProfileRepository.findByIdentifier verifies MC)
+        S4{Does MC Profile<br/>exist?}
+        S5(Return error "MC profile not found" - HTTP 400)
+        S6(Parallel: Query ScheduleRepository & BookingRepository)
+        S7{Database Query<br/>successful?}
+        S8(Report system error - HTTP 400)
+        S9(Merge / Calculate / Categorize Schedule & Booking)
+        S10(Sort by date and return Calendar Data array - HTTP 200)
     end
 
     U1 --> S1
     S1 --> S2
     S2 --> S3
     S3 --> S4
-    S4 -- Không --> S5
-    S4 -- Có --> S6
+    S4 -- No --> S5
+    S4 -- Yes --> S6
     S6 --> S7
-    S7 -- Không --> S8
-    S7 -- Có --> S9
+    S7 -- No --> S8
+    S7 -- Yes --> S9
     S9 --> S10
 
-    S5 --> End1((Kết thúc))
+    S5 --> End1((End))
     S8 --> End1
-    S10 --> End2((Kết thúc))
+    S10 --> End2((End))
 ```
 
 ---
 
-## UC22 - Update Busy Schedule (Đăng ký lịch bận)
+## UC22 - Update Busy Schedule
 
 **API Endpoint:** `POST /api/v1/mc/calendar/blockout`
 
@@ -142,33 +142,33 @@ flowchart TD
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
-    subgraph Client [Phía Người Dùng / MC Client]
-        Start((Bắt đầu)) --> U1(Chọn ngày/giờ trên giao diện và nhấn Block Date)
+    subgraph Client [User Side / MC Client]
+        Start((Start)) --> U1(Select date/time on interface and click Block Date)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(mcController.blockDate xử lý Request)
-        S2(MCService.blockDate nhận dữ liệu)
-        S3(ScheduleRepository.create lưu với trạng thái "Busy")
-        S4{Quá trình lưu DB<br/>thành công?}
-        S5(Trả về lỗi Validation / DB Error - HTTP 400)
-        S6(Trả về bản ghi Schedule mới - HTTP 201 Created)
+    subgraph System [System Side / Backend API]
+        S1(mcController.blockDate processes Request)
+        S2(MCService.blockDate receives data)
+        S3(ScheduleRepository.create saves with "Busy" status)
+        S4{Database Save<br/>successful?}
+        S5(Return Validation / DB Error - HTTP 400)
+        S6(Return new Schedule record - HTTP 201 Created)
     end
 
     U1 --> S1
     S1 --> S2
     S2 --> S3
     S3 --> S4
-    S4 -- Không --> S5
-    S4 -- Có --> S6
+    S4 -- No --> S5
+    S4 -- Yes --> S6
 
-    S5 --> End1((Kết thúc))
-    S6 --> End2((Kết thúc))
+    S5 --> End1((End))
+    S6 --> End2((End))
 ```
 
 ---
 
-## UC23 - Set Availability Status (Xác lập trạng thái khả dụng cho Slot)
+## UC23 - Set Availability Status
 
 **API Endpoint:** `POST /api/v1/availability`
 
@@ -178,42 +178,42 @@ flowchart TD
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
-    subgraph Client [Phía Người Dùng / MC Client]
-        Start((Bắt đầu)) --> U1(Tạo slot trạng thái trống/bận trên UI)
+    subgraph Client [User Side / MC Client]
+        Start((Start)) --> U1(Create available/busy status slot on UI)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(availabilityController.createAvailability nhận Request)
-        S2(AvailabilityService.createAvailability tiếp nhận)
-        S3(MCProfileRepository kiểm tra sự tồn tại của MC)
-        S4{Profile MC<br/>tồn tại?}
-        S5(Trả về lỗi Profile Not Found - HTTP 400)
-        S6(Gán status "Busy" hoặc "Available" theo dữ liệu)
-        S7(ScheduleRepository.create lưu thông tin vào CSDL)
-        S8{Lưu DB<br/>thành công?}
-        S9(Trả về lỗi thao tác DB - HTTP 400)
-        S10(Trả về Availability slot mới tạo - HTTP 201)
+    subgraph System [System Side / Backend API]
+        S1(availabilityController.createAvailability receives Request)
+        S2(AvailabilityService.createAvailability handles it)
+        S3(MCProfileRepository checks for MC existence)
+        S4{Does MC Profile<br/>exist?}
+        S5(Return Profile Not Found error - HTTP 400)
+        S6(Assign "Busy" or "Available" status based on data)
+        S7(ScheduleRepository.create saves information to Database)
+        S8{Database Save<br/>successful?}
+        S9(Return DB operation error - HTTP 400)
+        S10(Return newly created Availability slot - HTTP 201)
     end
 
     U1 --> S1
     S1 --> S2
     S2 --> S3
     S3 --> S4
-    S4 -- Không --> S5
-    S4 -- Có --> S6
+    S4 -- No --> S5
+    S4 -- Yes --> S6
     S6 --> S7
     S7 --> S8
-    S8 -- Không --> S9
-    S8 -- Có --> S10
+    S8 -- No --> S9
+    S8 -- Yes --> S10
 
-    S5 --> End1((Kết thúc))
+    S5 --> End1((End))
     S9 --> End1
-    S10 --> End2((Kết thúc))
+    S10 --> End2((End))
 ```
 
 ---
 
-## UC32 - View Users Lists (Xem danh sách người dùng)
+## UC32 - View Users Lists
 
 **API Endpoint:** `GET /api/v1/admin/users`
 
@@ -223,33 +223,33 @@ flowchart TD
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
-    subgraph Admin [Phía Quản Trị Viên / Admin Client]
-        Start((Bắt đầu)) --> U1(Truy cập trang Quản lý Người dùng)
+    subgraph Admin [Admin Side / Admin Client]
+        Start((Start)) --> U1(Access User Management page)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(adminController.getAllUsers nhận Request)
-        S2(User Model query '.find()' vào Database)
-        S3{Truy xuất xử lý<br/>thành công?}
-        S4(Trình báo Error / System Fail - HTTP 400)
-        S5(Trả mảng Users Array Data - HTTP 200)
+    subgraph System [System Side / Backend API]
+        S1(adminController.getAllUsers receives Request)
+        S2(User Model queries '.find()' to Database)
+        S3{Extraction process<br/>successful?}
+        S4(Report Error / System Fail - HTTP 400)
+        S5(Return Users Array Data - HTTP 200)
     end
 
     U1 --> S1
     S1 --> S2
     S2 --> S3
-    S3 -- Không --> S4
-    S3 -- Có --> S5
+    S3 -- No --> S4
+    S3 -- Yes --> S5
 
-    S4 --> End1((Kết thúc))
-    S5 --> End2((Kết thúc))
+    S4 --> End1((End))
+    S5 --> End2((End))
 ```
 
 ---
 
 ## UC33 & UC34 - Lock/Unlock Account & Verify MC
 
-*Cả Khóa/Mở tài khoản và Xác minh tài khoản MC đều sử dụng chung một flow API cập nhật status User ở Backend.*
+*Both Lock/Unlock account and MC Account Verification use the same User status update API flow in Backend.*
 
 **API Endpoint:** `PATCH /api/v1/admin/users/:id`
 
@@ -259,38 +259,38 @@ flowchart TD
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
-    subgraph Admin [Phía Quản Trị Viên / Admin Client]
-        Start((Bắt đầu)) --> U1(Nhấn nút Duyệt xác minh hoặc Khóa/Mở Khóa Account)
+    subgraph Admin [Admin Side / Admin Client]
+        Start((Start)) --> U1(Click Verify Approval or Lock/Unlock Account button)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(adminController.updateUserStatus lấy Request)
-        S2(Trích xuất tham số isActive, isVerified từ request)
-        S3(User Model thực hiện findByIdAndUpdate vào CSDL)
-        S4{Thao tác CSDL<br/>thành công?}
-        S5(Trả về DB Error - HTTP 400)
-        S6{Kiểm tra<br/>có tồn tại User?}
-        S7(Trả về lỗi 'User not found' - HTTP 404)
-        S8(Trả về Database User object mới - HTTP 200)
+    subgraph System [System Side / Backend API]
+        S1(adminController.updateUserStatus gets Request)
+        S2(Extract isActive, isVerified parameters from request)
+        S3(User Model executes findByIdAndUpdate on Database)
+        S4{Database Operation<br/>successful?}
+        S5(Return DB Error - HTTP 400)
+        S6{Check<br/>if User exists?}
+        S7(Return 'User not found' error - HTTP 404)
+        S8(Return new Database User object - HTTP 200)
     end
 
     U1 --> S1
     S1 --> S2
     S2 --> S3
     S3 --> S4
-    S4 -- Không --> S5
-    S4 -- Có --> S6
-    S6 -- Không --> S7
-    S6 -- Có --> S8
+    S4 -- No --> S5
+    S4 -- Yes --> S6
+    S6 -- No --> S7
+    S6 -- Yes --> S8
 
-    S5 --> End1((Kết thúc))
+    S5 --> End1((End))
     S7 --> End1
-    S8 --> End2((Kết thúc))
+    S8 --> End2((End))
 ```
 
 ---
 
-## UC36 - View All Bookings (Xem tất cả các phiên đặt lịch)
+## UC36 - View All Bookings
 
 **API Endpoint:** `GET /api/v1/admin/bookings`
 
@@ -300,29 +300,29 @@ flowchart TD
     style End1 fill:#333,stroke:#333,stroke-width:2px,color:#fff
     style End2 fill:#333,stroke:#333,stroke-width:2px,color:#fff
 
-    subgraph Admin [Phía Quản Trị Viên / Admin Client]
-        Start((Bắt đầu)) --> U1(Truy cập trang Quản lý Đặt Lịch)
+    subgraph Admin [Admin Side / Admin Client]
+        Start((Start)) --> U1(Access Booking Management page)
     end
 
-    subgraph System [Phía Hệ Thống / Backend API]
-        S1(adminController.getAllBookings xử lý Request)
-        S2(Booking Model query '.find().populate('mc').populate('client')')
-        S3{Truy vấn DB<br/>thành công?}
-        S4(Trình báo Server Error - HTTP 400)
-        S5(Trả về Danh sách Bookings đã populate - HTTP 200)
+    subgraph System [System Side / Backend API]
+        S1(adminController.getAllBookings processes Request)
+        S2(Booking Model queries '.find().populate('mc').populate('client')')
+        S3{Database Query<br/>successful?}
+        S4(Report Server Error - HTTP 400)
+        S5(Return populated Bookings List - HTTP 200)
     end
 
     U1 --> S1
     S1 --> S2
     S2 --> S3
-    S3 -- Không --> S4
-    S3 -- Có --> S5
+    S3 -- No --> S4
+    S3 -- Yes --> S5
 
-    S4 --> End1((Kết thúc))
-    S5 --> End2((Kết thúc))
+    S4 --> End1((End))
+    S5 --> End2((End))
 ```
 
 ---
 
-**Note về UC37 (Resolve Disputes / Giải quyết tranh chấp):** 
-Tính năng giải quyết tranh chấp (ticketing, disputes API) hiện chưa được phát triển trong source code backend (`adminController.js`, `adminRoutes.js`), do đó luồng xử lý thực tế chưa thể thiết lập Diagram chuẩn.
+**Note about UC37 (Resolve Disputes):** 
+The dispute management feature (ticketing, disputes API) has not currently been developed in the backend source code (`adminController.js`, `adminRoutes.js`), so a standard Diagram cannot be established for the actual processing flow.
