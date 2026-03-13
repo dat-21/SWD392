@@ -103,14 +103,14 @@ flowchart TD
 
     subgraph System [System Side / Backend API]
         S1(mcController.getCalendar processes Request)
-        S2(Call MCService.getCalendar -> AvailabilityService.getAvailability)
+        S2(Call MCService and AvailabilityService to get data)
         S3(MCProfileRepository.findByIdentifier verifies MC)
         S4{Does MC Profile<br/>exist?}
-        S5(Return error "MC profile not found" - HTTP 400)
-        S6(Parallel: Query ScheduleRepository & BookingRepository)
+        S5(Return MC Profile Not Found error - HTTP 400)
+        S6(Parallel: Query ScheduleRepository and BookingRepository)
         S7{Database Query<br/>successful?}
         S8(Report system error - HTTP 400)
-        S9(Merge / Calculate / Categorize Schedule & Booking)
+        S9(Merge / Calculate / Categorize Schedule and Booking)
         S10(Sort by date and return Calendar Data array - HTTP 200)
     end
 
@@ -149,7 +149,7 @@ flowchart TD
     subgraph System [System Side / Backend API]
         S1(mcController.blockDate processes Request)
         S2(MCService.blockDate receives data)
-        S3(ScheduleRepository.create saves with "Busy" status)
+        S3(ScheduleRepository.create saves with Busy status)
         S4{Database Save<br/>successful?}
         S5(Return Validation / DB Error - HTTP 400)
         S6(Return new Schedule record - HTTP 201 Created)
@@ -188,7 +188,7 @@ flowchart TD
         S3(MCProfileRepository checks for MC existence)
         S4{Does MC Profile<br/>exist?}
         S5(Return Profile Not Found error - HTTP 400)
-        S6(Assign "Busy" or "Available" status based on data)
+        S6(Assign Busy or Available status based on data)
         S7(ScheduleRepository.create saves information to Database)
         S8{Database Save<br/>successful?}
         S9(Return DB operation error - HTTP 400)
@@ -263,12 +263,12 @@ flowchart TD
 
     subgraph System [System Side / Backend API]
         S1(adminController.updateUserStatus gets Request)
-        S2(Extract 'isActive' parameter from request body)
+        S2(Extract isActive parameter from request body)
         S3(User Model executes findByIdAndUpdate on Database)
         S4{Database Operation<br/>successful?}
         S5(Return DB Error - HTTP 400)
         S6{Check<br/>if User exists?}
-        S7(Return 'User not found' error - HTTP 404)
+        S7(Return User not found error - HTTP 404)
         S8(Return updated User object - HTTP 200)
     end
 
@@ -304,12 +304,12 @@ flowchart TD
 
     subgraph System [System Side / Backend API]
         S1(adminController.updateUserStatus gets Request)
-        S2(Extract 'isVerified' parameter from request body)
+        S2(Extract isVerified parameter from request body)
         S3(User Model executes update query on Database)
         S4{Database Operation<br/>successful?}
         S5(Return DB Error - HTTP 400)
         S6{Check<br/>if Target exists?}
-        S7(Return 'User not found' error - HTTP 404)
+        S7(Return User not found error - HTTP 404)
         S8(Return verified User object - HTTP 200)
     end
 
@@ -382,7 +382,7 @@ flowchart TD
     subgraph System [System Side / Backend API]
         S1(disputeController.resolveDispute receives Request with decision)
         S2(Call DisputeService.processResolution)
-        S3(DisputeRepository updates dispute to 'Resolved' status in Database)
+        S3(DisputeRepository updates dispute to Resolved status in Database)
         S4{Dispute Update<br/>successful?}
         S5(Return Database Error - HTTP 400)
         S6{Decision affects<br/>Booking status?}
