@@ -169,7 +169,7 @@ flowchart LR
 | Class | Responsibility |
 |---|---|
 | `mcController.updateProfile` | Receives request, calls DTO sanitize, calls service |
-| `MCProfileDTO.fromOnboardingRequest` | Validate & sanitize input data |
+| `MCProfileDTO.fromOnboardingRequest` | Maps niche -> eventTypes, media -> showreels, and sanitizes |
 | `MCService.updateProfile` | Business logic layer |
 | `MCProfileRepository.updateByUserId` | Data access layer |
 | `MCProfile` (Model) | Mongoose schema definition |
@@ -220,7 +220,7 @@ flowchart TB
 | **Description** | MC uploads images and video clips of past hosted events for promotional purposes (showreel) |
 | **Preconditions** | MC is logged in, has an MCProfile |
 | **Postconditions** | Media file is uploaded to cloud storage and the URL is saved in MCProfile.showreels |
-| **Main Flow** | 1. MC navigates to the Portfolio/Media page<br>2. MC selects a file (image/video)<br>3. System validates the file (type, size)<br>4. System uploads the file to Cloud Storage (S3/Cloudinary)<br>5. System saves the URL into MCProfile.showreels<br>6. New media is displayed in the gallery |
+| **Main Flow** | 1. MC navigates to the Portfolio/Media page<br>2. MC selects a file<br>3. Frontend uploads to Cloud Storage<br>4. Cloud Storage returns URL<br>5. Frontend sends Media URL via PUT /api/v1/mc/profile<br>6. New media is displayed |
 | **Alternative Flows** | 3a. Invalid file (wrong format, too large) → Display error<br>4a. Cloud upload fails → Retry or display error |
 | **Business Rules** | - Image: max 10MB, formats: jpg, png, webp<br>- Video: max 100MB, formats: mp4, mov<br>- Max 20 showreels per MC |
 
@@ -265,20 +265,20 @@ sequenceDiagram
     participant DB as MongoDB
 
     MC->>FE: Select file & click Upload
-    FE->>FE: Validate file type & size (client-side)
-    FE->>Router: POST /api/v1/mc/profile/media (multipart/form-data)
-    Router->>Ctrl: uploadMedia(req, res)
-    Ctrl->>Ctrl: Validate file (server-side)
-    Ctrl->>Cloud: Upload file (multer + cloud SDK)
-    Cloud-->>Ctrl: { url, publicId }
-    Ctrl->>Svc: addShowreel(userId, {url, type})
-    Svc->>Repo: pushShowreel(userId, showreelData)
-    Repo->>DB: MCProfile.findOneAndUpdate($push: {showreels})
+    FE->>FE: Validate file type & size
+    FE->>Cloud: Upload directly to S3/Cloudinary SDK
+    Cloud-->>FE: URL returned {url, type}
+    FE->>Router: PUT /api/v1/mc/profile
+    Note right of FE: {media: [{url, type}]}
+    Router->>Ctrl: updateProfile(req, res)
+    Ctrl->>Svc: updateProfile(userId, {showreels})
+    Svc->>Repo: updateByUserId
+    Repo->>DB: MCProfile.findOneAndUpdate()
     DB-->>Repo: updatedProfile
     Repo-->>Svc: updatedProfile
     Svc-->>Ctrl: updatedProfile
-    Ctrl-->>Router: res.status(201).json({status: 'success'})
-    Router-->>FE: HTTP 201 Response
+    Ctrl-->>Router: res.status(200).json({status: 'success'})
+    Router-->>FE: HTTP 200 Response
     FE-->>MC: Display new media in gallery
 ```
 
@@ -307,27 +307,26 @@ stateDiagram-v2
 ```mermaid
 flowchart LR
     MC((MC)) -->|1. Upload file| FE[Frontend]
-    FE -->|2. multipart/form-data| API[API Server]
-    API -->|3. Auth Check| AUTH[JWT Middleware]
-    AUTH -->|4. Multer parse| MULTER[Multer Middleware]
-    MULTER -->|5. File buffer| CTRL[mcController]
-    CTRL -->|6. Upload stream| CLOUD[Cloud Storage]
-    CLOUD -->|7. URL response| CTRL
-    CTRL -->|8. Save URL| SVC[MCService]
-    SVC -->|9. $push showreel| REPO[MCProfileRepository]
-    REPO -->|10. Write| DB[(MongoDB)]
-    DB -->|11. Confirm| REPO
-    REPO -->|12. Result| SVC
-    SVC -->|13. DTO| CTRL
-    CTRL -->|14. JSON| FE
-    FE -->|15. Render gallery| MC
+    FE -->|2. File stream| CLOUD[Cloud Storage]
+    CLOUD -->|3. URL| FE
+    FE -->|4. PUT /mc/profile| API[API Server]
+    API -->|5. Auth Check| AUTH[JWT Middleware]
+    AUTH -->|6. Call update| CTRL[mcController]
+    CTRL -->|7. updateProfile| SVC[MCService]
+    SVC -->|8. Save showreels| REPO[MCProfileRepository]
+    REPO -->|9. Write| DB[(MongoDB)]
+    DB -->|10. Result| REPO
+    REPO -->|11. Profile| SVC
+    SVC -->|12. DTO| CTRL
+    CTRL -->|13. JSON Response| FE
+    FE -->|14. Render gallery| MC
 ```
 
 ## 6. Detail Design
 
 ### API Endpoint
-- **Method:** POST
-- **URL:** `/api/v1/mc/profile/media`
+- **Method:** PUT
+- **URL:** `/api/v1/mc/profile` (Frontend handles cloud upload and sends URL via profile update)
 - **Auth:** JWT Bearer Token (role: mc)
 - **Content-Type:** multipart/form-data
 
@@ -452,14 +451,24 @@ sequenceDiagram
     FE->>Router: GET /api/v1/mc/calendar
     Router->>Ctrl: getCalendar(req, res)
     Ctrl->>Svc: getCalendar(userId)
-    Svc->>Repo: findByMCId(userId)
-    Repo->>DB: Schedule.find({mc: userId}).populate('bookingId')
-    DB-->>Repo: scheduleEntries[]
-    Repo-->>Svc: scheduleEntries[]
+    Svc->>AvailSvc: getAvailability(userId)
+    
+    par Concurrent Data Fetch
+        AvailSvc->>SchedRepo: findByMCId(userId)
+        SchedRepo->>DB: Schedule.find({mc: userId})
+        DB-->>SchedRepo: schedules[]
+        
+        AvailSvc->>BookRepo: findCalendarByMCId(userId)
+        BookRepo->>DB: Booking.find({mc: userId}).populate()
+        DB-->>BookRepo: bookings[]
+    end
+    
+    AvailSvc->>AvailSvc: Merge & Map schedules + bookings
+    AvailSvc-->>Svc: sorted calendar array
     Svc-->>Ctrl: calendar data
     Ctrl-->>Router: res.status(200).json({data: {calendar}})
     Router-->>FE: HTTP 200 JSON
-    FE->>FE: Render calendar (day/week/month view)
+    FE->>FE: Render calendar
     FE-->>MC: Display color-coded calendar
 ```
 
@@ -493,10 +502,12 @@ flowchart LR
     API -->|3. JWT Auth| AUTH[Middleware]
     AUTH -->|4. getCalendar| CTRL[mcController]
     CTRL -->|5. getCalendar| SVC[MCService]
-    SVC -->|6. findByMCId| REPO[ScheduleRepository]
-    REPO -->|7. Query + populate| DB[(MongoDB)]
-    DB -->|8. Schedule docs| REPO
-    REPO -->|9. Array| SVC
+    SVC -->|6. getAvailability| ASVC[AvailabilityService]
+    ASVC -->|7. Concurrency Query| SREPO[ScheduleRepository]
+    ASVC -->|7. Concurrency Query| BREPO[BookingRepository]
+    SREPO -->|8. Schedules| ASVC
+    BREPO -->|8. Bookings| ASVC
+    ASVC -->|9. Merged Array| SVC
     SVC -->|10. Calendar data| CTRL
     CTRL -->|11. JSON 200| FE
     FE -->|12. Calendar UI| MC
@@ -593,8 +604,8 @@ flowchart TB
 | **Description** | MC marks specific time periods as busy so that clients cannot book during those times |
 | **Preconditions** | MC is logged in, slot is not already Booked |
 | **Postconditions** | Schedule entry is created with status = 'Busy' |
-| **Main Flow** | 1. MC navigates to Calendar<br>2. MC selects the date/time to block<br>3. MC clicks "Block Date"<br>4. System checks if the slot is already Booked<br>5. System creates Schedule entry {status: 'Busy'}<br>6. Calendar updates to display the busy slot (red) |
-| **Alternative Flows** | 4a. Slot already has a Booking → Display error "Cannot block a slot with an existing booking"<br>4b. Date in the past → Display error |
+| **Main Flow** | 1. MC navigates to Calendar<br>2. MC selects the date/time to block<br>3. MC clicks "Block Date"<br>4. System creates Schedule entry {status: 'Busy'}<br>6. Calendar updates to display the busy slot (red) |
+| **Alternative Flows** | 4a. Date in the past → Display error (client-side handling) |
 | **Business Rules** | - Cannot block a slot that already has a Booking<br>- Cannot select a date in the past<br>- endTime must be after startTime |
 
 ## 2. Activity Diagram
@@ -612,11 +623,8 @@ flowchart TD
     H -- No --> I[Display error: End time must be after start time]
     I --> D
     H -- Yes --> J[Send POST /mc/calendar/blockout]
-    J --> K[MCService.blockDate checks for conflicts]
-    K --> L{Slot already Booked?}
-    L -- Yes --> M[Return error: Slot conflict]
-    M --> C
-    L -- No --> N[ScheduleRepository.create with status Busy]
+    J --> K[MCService.blockDate]
+    K --> N[ScheduleRepository.create with status Busy]
     N --> O[Save to MongoDB]
     O --> P[Return new schedule entry]
     P --> Q[Calendar updates - display red slot]
@@ -641,10 +649,6 @@ sequenceDiagram
     Note right of FE: {date, startTime, endTime}
     Router->>Ctrl: blockDate(req, res)
     Ctrl->>Svc: blockDate(userId, dateData)
-    Svc->>Repo: checkConflict(userId, date, startTime, endTime)
-    Repo->>DB: Schedule.findOne({mc, date, status: 'Booked', overlap})
-    DB-->>Repo: null (no conflict)
-    Repo-->>Svc: no conflict
     Svc->>Repo: create({mc: userId, ...dateData, status: 'Busy'})
     Repo->>DB: new Schedule().save()
     DB-->>Repo: savedSchedule
@@ -684,10 +688,7 @@ flowchart LR
     API -->|3. JWT Auth| AUTH[Middleware]
     AUTH -->|4. blockDate| CTRL[mcController]
     CTRL -->|5. blockDate| SVC[MCService]
-    SVC -->|6. Check conflict| REPO[ScheduleRepository]
-    REPO -->|7. Query existing| DB[(MongoDB)]
-    DB -->|8. No conflict| REPO
-    SVC -->|9. Create entry| REPO
+    SVC -->|6. Create entry| REPO[ScheduleRepository]
     REPO -->|10. Insert| DB
     DB -->|11. Saved doc| REPO
     REPO -->|12. Result| SVC
@@ -699,7 +700,7 @@ flowchart LR
 ## 6. Detail Design
 
 ### API Endpoint
-- **Method:** POST
+- **Method:** PUT
 - **URL:** `/api/v1/mc/calendar/blockout`
 - **Auth:** JWT Bearer Token (role: mc)
 
@@ -833,14 +834,6 @@ sequenceDiagram
     Ctrl->>DTO: fromOnboardingRequest(req.body)
     DTO-->>Ctrl: { status: "Busy" }
     Ctrl->>Svc: updateProfile(userId, { status: "Busy" })
-    
-    opt Switching to Busy
-        Svc->>BookRepo: findPendingByMCId(userId)
-        BookRepo->>DB: Booking.find({mc: userId, status: 'Pending'})
-        DB-->>BookRepo: pendingBookings[]
-        BookRepo-->>Svc: pendingBookings (if any - warn)
-    end
-    
     Svc->>McRepo: updateByUserId(userId, {status: "Busy"})
     McRepo->>DB: MCProfile.findOneAndUpdate()
     DB-->>McRepo: updatedProfile
@@ -1227,11 +1220,6 @@ sequenceDiagram
     DB-->>Model: updatedUser
     Model-->>Ctrl: user
     
-    par Send notifications in parallel
-        Ctrl->>Email: Send Lock notification email
-        Ctrl->>Notif: Create system notification
-    end
-    
     Ctrl-->>Router: res.status(200).json({data: {user}})
     Router-->>FE: HTTP 200
     FE-->>Admin: Update badge: Locked
@@ -1448,12 +1436,6 @@ sequenceDiagram
     UserModel->>DB: Update
     DB-->>UserModel: updatedUser
     UserModel-->>Ctrl: user
-
-    par Notify MC
-        Ctrl->>Notif: createNotification({user: mcId, title: 'Verified!'})
-        Notif->>DB: Save notification
-        Ctrl->>Email: sendVerificationEmail(mc.email)
-    end
 
     Ctrl-->>FE: HTTP 200
     FE-->>Admin: MC has been verified
@@ -1846,7 +1828,7 @@ flowchart TB
 
 | Attribute | Description |
 |---|---|
-| **Use Case ID** | UC37 |
+| **Use Case ID** | UC37 (Note: Requires separate microservice/module expansion) |
 | **Name** | Resolve Disputes |
 | **Actor** | Admin |
 | **Description** | Admin mediates and resolves conflicts between MC and client (e.g., MC no-show, poor quality, refund requests, etc.) |
@@ -2040,7 +2022,7 @@ flowchart LR
 - **Auth:** JWT (admin)
 
 #### Resolve dispute
-- **Method:** POST
+- **Method:** PUT
 - **URL:** `/api/v1/admin/disputes/:bookingId/resolve`
 - **Auth:** JWT (admin)
 
