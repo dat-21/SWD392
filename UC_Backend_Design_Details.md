@@ -552,13 +552,13 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> ViewingUser : "Admin opens user row"
-    ViewingUser --> ModifyingStatus : "Admin toggles 'Lock Account' switch"
-    ModifyingStatus --> Requesting : "PATCH /admin/users/:id isActive=false"
-    Requesting --> Saved : "Success (Account Banned)"
-    Requesting --> Failed : "Unsuccessful execution"
-    Failed --> ViewingUser : "Return"
-    Saved --> [*] : "Visual confirmation"
+    [*] --> ViewingUser : Admin opens user row
+    ViewingUser --> ModifyingStatus : Admin toggles Lock Account switch
+    ModifyingStatus --> Requesting : PATCH /admin/users/:id with isActive=false
+    Requesting --> Saved : Success - Account Banned
+    Requesting --> Failed : Unsuccessful execution
+    Failed --> ViewingUser : Return
+    Saved --> [*] : Visual confirmation
 ```
 
 ### 3. Interaction / Sequence Diagram
@@ -625,14 +625,14 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> Unverified : "New MC registered"
-    Unverified --> Appraising : "Admin reviews submitted info"
-    Appraising --> Confirming : "Admin clicks 'Verify Account'"
-    Confirming --> Processing : "PATCH /admin/users/:id isVerified=true"
-    Processing --> Success : "Successfully Approved"
-    Processing --> Failed : "Database Error"
-    Failed --> Appraising : "Re-retry"
-    Success --> [*] : "Account marked Verified"
+    [*] --> Unverified : New MC registered
+    Unverified --> Appraising : Admin reviews submitted info
+    Appraising --> Confirming : Admin clicks Verify Account
+    Confirming --> Processing : PATCH /admin/users/:id with isVerified=true
+    Processing --> Success : Successfully Approved
+    Processing --> Failed : Database Error
+    Failed --> Appraising : Re-retry
+    Success --> [*] : Account marked Verified
 ```
 
 ### 3. Interaction / Sequence Diagram
