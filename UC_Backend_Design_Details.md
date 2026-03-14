@@ -554,8 +554,8 @@ flowchart TB
 stateDiagram-v2
     [*] --> ViewingUser : Admin opens user row
     ViewingUser --> ModifyingStatus : Admin toggles Lock Account switch
-    ModifyingStatus --> Requesting : PATCH /admin/users/:id with isActive=false
-    Requesting --> Saved : Success - Account Banned
+    ModifyingStatus --> Requesting : Send PATCH request to update isActive
+    Requesting --> Saved : Account Banned Successfully
     Requesting --> Failed : Unsuccessful execution
     Failed --> ViewingUser : Return
     Saved --> [*] : Visual confirmation
@@ -628,7 +628,7 @@ stateDiagram-v2
     [*] --> Unverified : New MC registered
     Unverified --> Appraising : Admin reviews submitted info
     Appraising --> Confirming : Admin clicks Verify Account
-    Confirming --> Processing : PATCH /admin/users/:id with isVerified=true
+    Confirming --> Processing : Send PATCH request to update isVerified
     Processing --> Success : Successfully Approved
     Processing --> Failed : Database Error
     Failed --> Appraising : Re-retry
