@@ -96,16 +96,16 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Viewing: MC accesses Profile
-    Viewing --> Editing: MC clicks Edit
-    Editing --> Validating: MC clicks Save
-    Validating --> Editing: Validation failed
-    Validating --> Saving: Validation passed
-    Saving --> Updated: Save successful
-    Saving --> Error: Save failed
-    Error --> Editing: MC retries
-    Updated --> Viewing: Display new profile
-    Viewing --> [*]: MC leaves page
+    [*] --> Viewing : "MC accesses Profile"
+    Viewing --> Editing : "MC clicks Edit"
+    Editing --> Validating : "MC clicks Save"
+    Validating --> Editing : "Validation failed"
+    Validating --> Saving : "Validation passed"
+    Saving --> Updated : "Save successful"
+    Saving --> Error : "Save failed"
+    Error --> Editing : "MC retries"
+    Updated --> Viewing : "Display new profile"
+    Viewing --> [*] : "MC leaves page"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -286,20 +286,20 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Idle: MC opens Portfolio page
-    Idle --> FileSelected: MC selects file
-    FileSelected --> Validating: Begin validation
-    Validating --> FileSelected: File invalid
-    Validating --> Uploading: File valid
-    Uploading --> UploadSuccess: Cloud returns URL
-    Uploading --> UploadFailed: Connection error/timeout
-    UploadFailed --> Idle: MC retries
-    UploadSuccess --> SavingToDB: Save URL to DB
-    SavingToDB --> Completed: DB update OK
-    SavingToDB --> RollbackCloud: DB error - Delete cloud file
-    RollbackCloud --> Idle: Return to idle
-    Completed --> Idle: Gallery updated
-    Idle --> [*]: MC leaves page
+    [*] --> Idle : "MC opens Portfolio page"
+    Idle --> FileSelected : "MC selects file"
+    FileSelected --> Validating : "Begin validation"
+    Validating --> FileSelected : "File invalid"
+    Validating --> Uploading : "File valid"
+    Uploading --> UploadSuccess : "Cloud returns URL"
+    Uploading --> UploadFailed : "Connection error/timeout"
+    UploadFailed --> Idle : "MC retries"
+    UploadSuccess --> SavingToDB : "Save URL to DB"
+    SavingToDB --> Completed : "DB update OK"
+    SavingToDB --> RollbackCloud : "DB error - Delete cloud file"
+    RollbackCloud --> Idle : "Return to idle"
+    Completed --> Idle : "Gallery updated"
+    Idle --> [*] : "MC leaves page"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -476,21 +476,21 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Loading: MC opens Calendar
-    Loading --> Empty: No entries
-    Loading --> Rendered: Has entries
-    Empty --> [*]: MC leaves page
-    Rendered --> DayView: Select day view
-    Rendered --> WeekView: Select week view
-    Rendered --> MonthView: Select month view
-    DayView --> DetailView: MC clicks entry
-    WeekView --> DetailView: MC clicks entry
-    MonthView --> DetailView: MC clicks entry
-    DetailView --> Rendered: MC goes back
-    DayView --> WeekView: Switch mode
-    WeekView --> MonthView: Switch mode
-    MonthView --> DayView: Switch mode
-    Rendered --> [*]: MC leaves page
+    [*] --> Loading : "MC opens Calendar"
+    Loading --> Empty : "No entries"
+    Loading --> Rendered : "Has entries"
+    Empty --> [*] : "MC leaves page"
+    Rendered --> DayView : "Select day view"
+    Rendered --> WeekView : "Select week view"
+    Rendered --> MonthView : "Select month view"
+    DayView --> DetailView : "MC clicks entry"
+    WeekView --> DetailView : "MC clicks entry"
+    MonthView --> DetailView : "MC clicks entry"
+    DetailView --> Rendered : "MC goes back"
+    DayView --> WeekView : "Switch mode"
+    WeekView --> MonthView : "Switch mode"
+    MonthView --> DayView : "Switch mode"
+    Rendered --> [*] : "MC leaves page"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -663,20 +663,20 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> CalendarView: MC opens Calendar
-    CalendarView --> SlotSelected: MC selects date/time
-    SlotSelected --> TimeInput: MC enters time
-    TimeInput --> ClientValidation: MC clicks Block
-    ClientValidation --> TimeInput: Validation error
-    ClientValidation --> ServerCheck: Client OK
-    ServerCheck --> ConflictError: Slot already Booked
-    ConflictError --> CalendarView: MC selects again
-    ServerCheck --> Creating: No conflict
-    Creating --> Created: Save successful
-    Creating --> ServerError: DB Error
-    ServerError --> CalendarView: Retry
-    Created --> CalendarView: Calendar refresh - red slot
-    CalendarView --> [*]: MC leaves page
+    [*] --> CalendarView : "MC opens Calendar"
+    CalendarView --> SlotSelected : "MC selects date/time"
+    SlotSelected --> TimeInput : "MC enters time"
+    TimeInput --> ClientValidation : "MC clicks Block"
+    ClientValidation --> TimeInput : "Validation error"
+    ClientValidation --> ServerCheck : "Client OK"
+    ServerCheck --> ConflictError : "Slot already Booked"
+    ConflictError --> CalendarView : "MC selects again"
+    ServerCheck --> Creating : "No conflict"
+    Creating --> Created : "Save successful"
+    Creating --> ServerError : "DB Error"
+    ServerError --> CalendarView : "Retry"
+    Created --> CalendarView : "Calendar refresh - red slot"
+    CalendarView --> [*] : "MC leaves page"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -849,13 +849,13 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Available: MCProfile initialized
-    Available --> PendingBusy: MC toggles to Busy
-    PendingBusy --> ConfirmBusy: Has pending bookings - MC confirms
-    PendingBusy --> Busy: No pending bookings
-    ConfirmBusy --> Busy: MC agrees
-    ConfirmBusy --> Available: MC cancels
-    Busy --> Available: MC toggles to Available
+    [*] --> Available : "MCProfile initialized"
+    Available --> PendingBusy : "MC toggles to Busy"
+    PendingBusy --> ConfirmBusy : "Has pending bookings - MC confirms"
+    PendingBusy --> Busy : "No pending bookings"
+    ConfirmBusy --> Busy : "MC agrees"
+    ConfirmBusy --> Available : "MC cancels"
+    Busy --> Available : "MC toggles to Available"
 
     state Available {
         [*] --> VisibleInSearch
@@ -1038,22 +1038,22 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> AuthCheck: Admin accesses page
-    AuthCheck --> Forbidden: Not Admin
+    [*] --> AuthCheck : "Admin accesses page"
+    AuthCheck --> Forbidden : "Not Admin"
     Forbidden --> [*]
-    AuthCheck --> Loading: Authentication OK
-    Loading --> EmptyList: No users
-    Loading --> DisplayList: Has users
+    AuthCheck --> Loading : "Authentication OK"
+    Loading --> EmptyList : "No users"
+    Loading --> DisplayList : "Has users"
     EmptyList --> [*]
-    DisplayList --> Filtering: Admin searches/filters
-    Filtering --> DisplayList: New results
-    DisplayList --> Sorting: Admin sorts
-    Sorting --> DisplayList: Sorted list
-    DisplayList --> Paginating: Admin changes page
-    Paginating --> DisplayList: New page
-    DisplayList --> UserDetail: Admin clicks user
-    UserDetail --> DisplayList: Go back
-    DisplayList --> [*]: Admin leaves page
+    DisplayList --> Filtering : "Admin searches/filters"
+    Filtering --> DisplayList : "New results"
+    DisplayList --> Sorting : "Admin sorts"
+    Sorting --> DisplayList : "Sorted list"
+    DisplayList --> Paginating : "Admin changes page"
+    Paginating --> DisplayList : "New page"
+    DisplayList --> UserDetail : "Admin clicks user"
+    UserDetail --> DisplayList : "Go back"
+    DisplayList --> [*] : "Admin leaves page"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -1229,17 +1229,17 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Active: User registration successful
+    [*] --> Active : "User registration successful"
     
-    Active --> LockRequested: Admin clicks Lock
-    LockRequested --> LockConfirm: Show confirmation dialog
-    LockConfirm --> Active: Admin cancels
-    LockConfirm --> Locked: Admin confirms
+    Active --> LockRequested : "Admin clicks Lock"
+    LockRequested --> LockConfirm : "Show confirmation dialog"
+    LockConfirm --> Active : "Admin cancels"
+    LockConfirm --> Locked : "Admin confirms"
     
-    Locked --> UnlockRequested: Admin clicks Unlock
-    UnlockRequested --> UnlockConfirm: Show confirmation dialog
-    UnlockConfirm --> Locked: Admin cancels
-    UnlockConfirm --> Active: Admin confirms
+    Locked --> UnlockRequested : "Admin clicks Unlock"
+    UnlockRequested --> UnlockConfirm : "Show confirmation dialog"
+    UnlockConfirm --> Locked : "Admin cancels"
+    UnlockConfirm --> Active : "Admin confirms"
 
     state Active {
         [*] --> CanLogin
@@ -1445,13 +1445,13 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Unverified: MC registers account
-
-    Unverified --> KYCSubmitted: MC submits KYC documents
-    KYCSubmitted --> UnderReview: Admin begins review
-    UnderReview --> Verified: Admin Approves
-    UnderReview --> Rejected: Admin Rejects (with reason)
-    Rejected --> KYCSubmitted: MC resubmits documents
+    [*] --> Unverified : "MC registers account"
+    
+    Unverified --> KYCSubmitted : "MC submits KYC documents"
+    KYCSubmitted --> UnderReview : "Admin begins review"
+    UnderReview --> Verified : "Admin Approves"
+    UnderReview --> Rejected : "Admin Rejects (with reason)"
+    Rejected --> KYCSubmitted : "MC resubmits documents"
     
     state Unverified {
         [*] --> NoVerifiedBadge
@@ -1681,18 +1681,18 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Loading: Admin opens Booking Management
-    Loading --> EmptyList: No bookings
-    Loading --> DisplayTable: Has bookings
+    [*] --> Loading : "Admin opens Booking Management"
+    Loading --> EmptyList : "No bookings"
+    Loading --> DisplayTable : "Has bookings"
     EmptyList --> [*]
     
-    DisplayTable --> FilterActive: Admin applies filter
-    FilterActive --> DisplayTable: New results
-    DisplayTable --> DetailView: Click booking
-    DetailView --> DisplayTable: Go back
-    DisplayTable --> Exporting: Admin exports report
-    Exporting --> DisplayTable: Download complete
-    DisplayTable --> [*]: Admin leaves page
+    DisplayTable --> FilterActive : "Admin applies filter"
+    FilterActive --> DisplayTable : "New results"
+    DisplayTable --> DetailView : "Click booking"
+    DetailView --> DisplayTable : "Go back"
+    DisplayTable --> Exporting : "Admin exports report"
+    Exporting --> DisplayTable : "Download complete"
+    DisplayTable --> [*] : "Admin leaves page"
     
     state DisplayTable {
         [*] --> ShowAll
@@ -1947,13 +1947,13 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Open: Client/MC creates dispute
-
-    Open --> UnderReview: Admin begins review
-    UnderReview --> NeedMoreInfo: More information needed
-    NeedMoreInfo --> UnderReview: Additional evidence received
+    [*] --> Open : "Client/MC creates dispute"
     
-    UnderReview --> Resolving: Admin makes decision
+    Open --> UnderReview : "Admin begins review"
+    UnderReview --> NeedMoreInfo : "More information needed"
+    NeedMoreInfo --> UnderReview : "Additional evidence received"
+    
+    UnderReview --> Resolving : "Admin makes decision"
     
     Resolving --> ResolvedFavorClient: Favor Client
     Resolving --> ResolvedFavorMC: Favor MC

@@ -14,15 +14,15 @@ This is the detailed design and system communication structure for the MC Hub sy
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> ViewingProfile: Successful Login
-    ViewingProfile --> EditingProfile: Click "Edit Profile"
-    EditingProfile --> ValidatingInput: Submit Form (PUT /api/v1/mc/profile)
-    ValidatingInput --> EditingProfile: DTO Validation failed
-    ValidatingInput --> UpdatingDatabase: DTO is valid
-    UpdatingDatabase --> ProfileUpdated: Database updated successfully
-    UpdatingDatabase --> ErrorState: Database Error
-    ErrorState --> EditingProfile: Retry
-    ProfileUpdated --> ViewingProfile: Receive HTTP 200 & Render new data
+    [*] --> ViewingProfile : "Successful Login"
+    ViewingProfile --> EditingProfile : "Click 'Edit Profile'"
+    EditingProfile --> ValidatingInput : "Submit Form (PUT /api/v1/mc/profile)"
+    ValidatingInput --> EditingProfile : "DTO Validation failed"
+    ValidatingInput --> UpdatingDatabase : "DTO is valid"
+    UpdatingDatabase --> ProfileUpdated : "Database updated successfully"
+    UpdatingDatabase --> ErrorState : "Database Error"
+    ErrorState --> EditingProfile : "Retry"
+    ProfileUpdated --> ViewingProfile : "Receive HTTP 200 & Render new data"
     ViewingProfile --> [*]
 ```
 
@@ -117,13 +117,13 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> UploadingToCloud: MC selects file and uploads (Client-side)
-    UploadingToCloud --> UploadFailed: Weak network / File too large
-    UploadFailed --> [*]: Retry
-    UploadingToCloud --> CloudURLReceived: Cloud returns URL (AWS/Cloudinary)
-    CloudURLReceived --> UpdatingProfile: Send PUT /api/v1/mc/profile ('media' var)
-    UpdatingProfile --> ErrorState: DB Update Error
-    UpdatingProfile --> MediaSaved: DB Updated successfully
+    [*] --> UploadingToCloud : "MC selects file and uploads (Client-side)"
+    UploadingToCloud --> UploadFailed : "Weak network / File too large"
+    UploadFailed --> [*] : "Retry"
+    UploadingToCloud --> CloudURLReceived : "Cloud returns URL (AWS/Cloudinary)"
+    CloudURLReceived --> UpdatingProfile : "Send PUT /api/v1/mc/profile ('media' var)"
+    UpdatingProfile --> ErrorState : "DB Update Error"
+    UpdatingProfile --> MediaSaved : "DB Updated successfully"
     MediaSaved --> [*]
 ```
 
@@ -210,12 +210,12 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> RequestingCalendar: Open Calendar Dashboard
-    RequestingCalendar --> QueryingDB: GET /api/v1/mc/calendar
-    QueryingDB --> DBError: Database failure
-    DBError --> RequestingCalendar: Retry
-    QueryingDB --> CalculatingSchedules: DB returns Schedule & Bookings
-    CalculatingSchedules --> RenderingUI: Merge and sort events
+    [*] --> RequestingCalendar : "Open Calendar Dashboard"
+    RequestingCalendar --> QueryingDB : "GET /api/v1/mc/calendar"
+    QueryingDB --> DBError : "Database failure"
+    DBError --> RequestingCalendar : "Retry"
+    QueryingDB --> CalculatingSchedules : "DB returns Schedule & Bookings"
+    CalculatingSchedules --> RenderingUI : "Merge and sort events"
     RenderingUI --> [*]: Display calendar on screen
 ```
 
@@ -312,12 +312,12 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> ViewingCalendar: Access Calendar UI
-    ViewingCalendar --> SelectingSlot: Click to Block Date
-    SelectingSlot --> Submitting: POST /api/v1/mc/calendar/blockout
-    Submitting --> ErrorState: Conflict / Validation Error
-    ErrorState --> SelectingSlot: Fix input
-    Submitting --> SlotSaved: Success
+    [*] --> ViewingCalendar : "Access Calendar UI"
+    ViewingCalendar --> SelectingSlot : "Click to Block Date"
+    SelectingSlot --> Submitting : "POST /api/v1/mc/calendar/blockout"
+    Submitting --> ErrorState : "Conflict / Validation Error"
+    ErrorState --> SelectingSlot : "Fix input"
+    Submitting --> SlotSaved : "Success"
     SlotSaved --> [*]: Calendar displays Red Block
 ```
 
@@ -396,13 +396,13 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> ViewingAvailabilityUI: Access Availability Modal
-    ViewingAvailabilityUI --> CreatingSlot: Toggle Available/Busy status
-    CreatingSlot --> Validating: POST /api/v1/availability
-    Validating --> ErrorState: DB Error
-    ErrorState --> ViewingAvailabilityUI: Reject
-    Validating --> Updated: Saved to DB
-    Updated --> [*]: Reflect slot changes on UI
+    [*] --> ViewingAvailabilityUI : "Access Availability Modal"
+    ViewingAvailabilityUI --> CreatingSlot : "Toggle Available/Busy status"
+    CreatingSlot --> Validating : "POST /api/v1/availability"
+    Validating --> ErrorState : "DB Error"
+    ErrorState --> ViewingAvailabilityUI : "Reject"
+    Validating --> Updated : "Saved to DB"
+    Updated --> [*] : "Reflect slot changes on UI"
 ```
 
 ### 3. Interaction / Sequence Diagram
@@ -481,12 +481,12 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> Dashboard: Admin logs into Admin Panel
-    Dashboard --> LoadingUsers: Click "User Management"
-    LoadingUsers --> RenderedList: API Returns Data
-    LoadingUsers --> ErrorState: Request Failure
-    ErrorState --> Dashboard: Retry
-    RenderedList --> [*]: Admin views table
+    [*] --> Dashboard : "Admin logs into Admin Panel"
+    Dashboard --> LoadingUsers : "Click 'User Management'"
+    LoadingUsers --> RenderedList : "API Returns Data"
+    LoadingUsers --> ErrorState : "Request Failure"
+    ErrorState --> Dashboard : "Retry"
+    RenderedList --> [*] : "Admin views table"
 ```
 
 ### 3. Interaction / Sequence Diagram
@@ -552,13 +552,13 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> ViewingUser: Admin opens user row
-    ViewingUser --> ModifyingStatus: Admin toggles "Lock Account" switch
-    ModifyingStatus --> Requesting: PATCH /admin/users/:id (isActive=false)
-    Requesting --> Saved: Success (Account Banned)
-    Requesting --> Failed: Unsuccessful execution
-    Failed --> ViewingUser: Return
-    Saved --> [*]: Visual confirmation
+    [*] --> ViewingUser : "Admin opens user row"
+    ViewingUser --> ModifyingStatus : "Admin toggles 'Lock Account' switch"
+    ModifyingStatus --> Requesting : "PATCH /admin/users/:id (isActive=false)"
+    Requesting --> Saved : "Success (Account Banned)"
+    Requesting --> Failed : "Unsuccessful execution"
+    Failed --> ViewingUser : "Return"
+    Saved --> [*] : "Visual confirmation"
 ```
 
 ### 3. Interaction / Sequence Diagram
@@ -625,14 +625,14 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> Unverified: New MC registered
-    Unverified --> Appraising: Admin reviews submitted info
-    Appraising --> Confirming: Admin clicks "Verify Account"
-    Confirming --> Processing: PATCH /admin/users/:id (isVerified=true)
-    Processing --> Success: Successfully Approved
-    Processing --> Failed: Database Error
-    Failed --> Appraising: Re-retry
-    Success --> [*]: Account marked Verified
+    [*] --> Unverified : "New MC registered"
+    Unverified --> Appraising : "Admin reviews submitted info"
+    Appraising --> Confirming : "Admin clicks 'Verify Account'"
+    Confirming --> Processing : "PATCH /admin/users/:id (isVerified=true)"
+    Processing --> Success : "Successfully Approved"
+    Processing --> Failed : "Database Error"
+    Failed --> Appraising : "Re-retry"
+    Success --> [*] : "Account marked Verified"
 ```
 
 ### 3. Interaction / Sequence Diagram
@@ -699,12 +699,12 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> Dashboard: Admin enters main dashboard
-    Dashboard --> Fetching: Admin clicks 'Bookings Management'
-    Fetching --> Loading: GET /api/v1/admin/bookings
-    Loading --> ErrorState: Fail to process
-    Loading --> Rendering: Success fetching array
-    Rendering --> [*]: Displays comprehensive logs
+    [*] --> Dashboard : "Admin enters main dashboard"
+    Dashboard --> Fetching : "Admin clicks 'Bookings Management'"
+    Fetching --> Loading : "GET /api/v1/admin/bookings"
+    Loading --> ErrorState : "Fail to process"
+    Loading --> Rendering : "Success fetching array"
+    Rendering --> [*] : "Displays comprehensive logs"
 ```
 
 ### 3. Interaction / Sequence Diagram
@@ -770,12 +770,12 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> Pending: Dispute submitted by Client/MC
-    Pending --> UnderReview: Admin claims and starts reviewing
-    UnderReview --> WaitingEvidence: Admin requests additional evidence
-    WaitingEvidence --> UnderReview: User submits evidence
-    UnderReview --> Resolved: Admin enforces final decision
-    Resolved --> [*]: Dispute Closed
+    [*] --> Pending : "Dispute submitted by Client/MC"
+    Pending --> UnderReview : "Admin claims and starts reviewing"
+    UnderReview --> WaitingEvidence : "Admin requests additional evidence"
+    WaitingEvidence --> UnderReview : "User submits evidence"
+    UnderReview --> Resolved : "Admin enforces final decision"
+    Resolved --> [*] : "Dispute Closed"
 ```
 
 ### 3. Interaction / Sequence Diagram
@@ -868,13 +868,13 @@ flowchart TB
 ### 2. State Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> Dashboard: Admin enters Finance section
-    Dashboard --> FetchingData: Trigger GET /api/v1/admin/transactions
-    FetchingData --> Processing: Server query
-    Processing --> Error: Database error
-    Processing --> Loaded: Success
-    Error --> Dashboard: Retry
-    Loaded --> [*]: Display transaction table
+    [*] --> Dashboard : "Admin enters Finance section"
+    Dashboard --> FetchingData : "Trigger GET /api/v1/admin/transactions"
+    FetchingData --> Processing : "Server query"
+    Processing --> Error : "Database error"
+    Processing --> Loaded : "Success"
+    Error --> Dashboard : "Retry"
+    Loaded --> [*] : "Display transaction table"
 ```
 
 ### 3. Interaction / Sequence Diagram

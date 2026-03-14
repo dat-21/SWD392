@@ -96,16 +96,16 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Viewing: MC truy cập Profile
-    Viewing --> Editing: MC nhấn Edit
-    Editing --> Validating: MC nhấn Save
-    Validating --> Editing: Validation failed
-    Validating --> Saving: Validation passed
-    Saving --> Updated: Lưu thành công
-    Saving --> Error: Lưu thất bại
-    Error --> Editing: MC thử lại
-    Updated --> Viewing: Hiển thị profile mới
-    Viewing --> [*]: MC rời trang
+    [*] --> Viewing : "MC truy cập Profile"
+    Viewing --> Editing : "MC nhấn Edit"
+    Editing --> Validating : "MC nhấn Save"
+    Validating --> Editing : "Validation failed"
+    Validating --> Saving : "Validation passed"
+    Saving --> Updated : "Lưu thành công"
+    Saving --> Error : "Lưu thất bại"
+    Error --> Editing : "MC thử lại"
+    Updated --> Viewing : "Hiển thị profile mới"
+    Viewing --> [*] : "MC rời trang"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -286,20 +286,20 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Idle: MC mở trang Portfolio
-    Idle --> FileSelected: MC chọn file
-    FileSelected --> Validating: Bắt đầu validate
-    Validating --> FileSelected: File không hợp lệ
-    Validating --> Uploading: File hợp lệ
-    Uploading --> UploadSuccess: Cloud trả về URL
-    Uploading --> UploadFailed: Lỗi kết nối/timeout
-    UploadFailed --> Idle: MC thử lại
-    UploadSuccess --> SavingToDB: Lưu URL vào DB
-    SavingToDB --> Completed: DB cập nhật OK
-    SavingToDB --> RollbackCloud: DB lỗi → Xóa file cloud
-    RollbackCloud --> Idle: Quay lại
-    Completed --> Idle: Gallery cập nhật
-    Idle --> [*]: MC rời trang
+    [*] --> Idle : "MC mở trang Portfolio"
+    Idle --> FileSelected : "MC chọn file"
+    FileSelected --> Validating : "Bắt đầu validate"
+    Validating --> FileSelected : "File không hợp lệ"
+    Validating --> Uploading : "File hợp lệ"
+    Uploading --> UploadSuccess : "Cloud trả về URL"
+    Uploading --> UploadFailed : "Lỗi kết nối/timeout"
+    UploadFailed --> Idle : "MC thử lại"
+    UploadSuccess --> SavingToDB : "Lưu URL vào DB"
+    SavingToDB --> Completed : "DB cập nhật OK"
+    SavingToDB --> RollbackCloud : "DB lỗi → Xóa file cloud"
+    RollbackCloud --> Idle : "Quay lại"
+    Completed --> Idle : "Gallery cập nhật"
+    Idle --> [*] : "MC rời trang"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -467,21 +467,21 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Loading: MC mở Calendar
-    Loading --> Empty: Không có entries
-    Loading --> Rendered: Có entries
-    Empty --> [*]: MC rời trang
-    Rendered --> DayView: Chọn xem ngày
-    Rendered --> WeekView: Chọn xem tuần
-    Rendered --> MonthView: Chọn xem tháng
-    DayView --> DetailView: MC nhấn entry
-    WeekView --> DetailView: MC nhấn entry
-    MonthView --> DetailView: MC nhấn entry
-    DetailView --> Rendered: MC quay lại
-    DayView --> WeekView: Chuyển chế độ
-    WeekView --> MonthView: Chuyển chế độ
-    MonthView --> DayView: Chuyển chế độ
-    Rendered --> [*]: MC rời trang
+    [*] --> Loading : "MC mở Calendar"
+    Loading --> Empty : "Không có entries"
+    Loading --> Rendered : "Có entries"
+    Empty --> [*] : "MC rời trang"
+    Rendered --> DayView : "Chọn xem ngày"
+    Rendered --> WeekView : "Chọn xem tuần"
+    Rendered --> MonthView : "Chọn xem tháng"
+    DayView --> DetailView : "MC nhấn entry"
+    WeekView --> DetailView : "MC nhấn entry"
+    MonthView --> DetailView : "MC nhấn entry"
+    DetailView --> Rendered : "MC quay lại"
+    DayView --> WeekView : "Chuyển chế độ"
+    WeekView --> MonthView : "Chuyển chế độ"
+    MonthView --> DayView : "Chuyển chế độ"
+    Rendered --> [*] : "MC rời trang"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -659,20 +659,20 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> CalendarView: MC mở Calendar
-    CalendarView --> SlotSelected: MC chọn ngày/giờ
-    SlotSelected --> TimeInput: MC nhập thời gian
-    TimeInput --> ClientValidation: MC nhấn Block
-    ClientValidation --> TimeInput: Validation lỗi
-    ClientValidation --> ServerCheck: Client OK
-    ServerCheck --> ConflictError: Slot đã bị Booked
-    ConflictError --> CalendarView: MC chọn lại
-    ServerCheck --> Creating: Không conflict
-    Creating --> Created: Lưu thành công
-    Creating --> ServerError: DB Error
-    ServerError --> CalendarView: Retry
-    Created --> CalendarView: Calendar refresh - slot đỏ
-    CalendarView --> [*]: MC rời trang
+    [*] --> CalendarView : "MC mở Calendar"
+    CalendarView --> SlotSelected : "MC chọn ngày/giờ"
+    SlotSelected --> TimeInput : "MC nhập thời gian"
+    TimeInput --> ClientValidation : "MC nhấn Block"
+    ClientValidation --> TimeInput : "Validation lỗi"
+    ClientValidation --> ServerCheck : "Client OK"
+    ServerCheck --> ConflictError : "Slot đã bị Booked"
+    ConflictError --> CalendarView : "MC chọn lại"
+    ServerCheck --> Creating : "Không conflict"
+    Creating --> Created : "Lưu thành công"
+    Creating --> ServerError : "DB Error"
+    ServerError --> CalendarView : "Retry"
+    Created --> CalendarView : "Calendar refresh - slot đỏ"
+    CalendarView --> [*] : "MC rời trang"
 ```
 
 ## 5. Integrated Communication Diagram
@@ -856,13 +856,13 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Available: MCProfile khởi tạo
-    Available --> PendingBusy: MC toggle → Busy
-    PendingBusy --> ConfirmBusy: Có pending bookings → MC xác nhận
-    PendingBusy --> Busy: Không có pending bookings
-    ConfirmBusy --> Busy: MC đồng ý
-    ConfirmBusy --> Available: MC hủy
-    Busy --> Available: MC toggle → Available
+    [*] --> Available : "MCProfile khởi tạo"
+    Available --> PendingBusy : "MC toggle → Busy"
+    PendingBusy --> ConfirmBusy : "Có pending bookings → MC xác nhận"
+    PendingBusy --> Busy : "Không có pending bookings"
+    ConfirmBusy --> Busy : "MC đồng ý"
+    ConfirmBusy --> Available : "MC hủy"
+    Busy --> Available : "MC toggle → Available"
 
     state Available {
         [*] --> VisibleInSearch
@@ -1699,18 +1699,18 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Loading: Admin mở Booking Management
-    Loading --> EmptyList: Không có bookings
-    Loading --> DisplayTable: Có bookings
+    [*] --> Loading : "Admin mở Booking Management"
+    Loading --> EmptyList : "Không có bookings"
+    Loading --> DisplayTable : "Có bookings"
     EmptyList --> [*]
     
-    DisplayTable --> FilterActive: Admin áp dụng filter
-    FilterActive --> DisplayTable: Kết quả mới
-    DisplayTable --> DetailView: Click booking
-    DetailView --> DisplayTable: Quay lại
-    DisplayTable --> Exporting: Admin xuất báo cáo
-    Exporting --> DisplayTable: Download complete
-    DisplayTable --> [*]: Admin rời trang
+    DisplayTable --> FilterActive : "Admin áp dụng filter"
+    FilterActive --> DisplayTable : "Kết quả mới"
+    DisplayTable --> DetailView : "Click booking"
+    DetailView --> DisplayTable : "Quay lại"
+    DisplayTable --> Exporting : "Admin xuất báo cáo"
+    Exporting --> DisplayTable : "Download complete"
+    DisplayTable --> [*] : "Admin rời trang"
     
     state DisplayTable {
         [*] --> ShowAll
@@ -1965,17 +1965,17 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Open: Client/MC tạo dispute
-
-    Open --> UnderReview: Admin bắt đầu review
-    UnderReview --> NeedMoreInfo: Cần thêm thông tin
-    NeedMoreInfo --> UnderReview: Nhận evidence bổ sung
+    [*] --> Open : "Client/MC tạo dispute"
     
-    UnderReview --> Resolving: Admin đưa ra quyết định
+    Open --> UnderReview : "Admin bắt đầu review"
+    UnderReview --> NeedMoreInfo : "Cần thêm thông tin"
+    NeedMoreInfo --> UnderReview : "Nhận evidence bổ sung"
     
-    Resolving --> ResolvedFavorClient: Favor Client
-    Resolving --> ResolvedFavorMC: Favor MC
-    Resolving --> ResolvedCompromise: Compromise
+    UnderReview --> Resolving : "Admin đưa ra quyết định"
+    
+    Resolving --> ResolvedFavorClient : "Favor Client"
+    Resolving --> ResolvedFavorMC : "Favor MC"
+    Resolving --> ResolvedCompromise : "Compromise"
 
     state ResolvedFavorClient {
         [*] --> RefundClient
