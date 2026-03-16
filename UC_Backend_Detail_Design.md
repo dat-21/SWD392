@@ -77,17 +77,72 @@ flowchart LR
 
 **Figure III-4.19** Detailed Design Classes for UC: Update MC Profile
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `PUT /api/v1/mc/profile` |
-| **Request Body** | `{ niche: "Wedding", experience: 5, rates: {min: 100, max: 500}, languages: ["EN", "VN"] }` |
-| **Controller** | `mcController.updateProfile(req, res)` |
-| **DTO** | `MCProfileDTO.fromOnboardingRequest` maps input variables (e.g., converts `niche` → `eventTypes`) |
-| **Service** | `MCService.updateProfile(userId, sanitizedData)` |
-| **Repository** | `MCProfileRepository.updateByUserId(userId, data)` |
-| **Database Query** | `MCProfile.findOneAndUpdate({ user: userId }, data)` |
-| **Database Model** | `MCProfile` linked with `User` Model via `user` ref ObjectId |
-| **Response** | Formatted via `new MCProfileDTO(profile)` → HTTP 200 `{ status: 'success', data }` |
+```mermaid
+classDiagram
+    class MC_Profile_View {
+        <<Boundary>>
+        +show()
+        +submitUpdate(profileData : ProfileDTO) void
+        +displayStatus(message : string)
+    }
+
+    class MC_Controller {
+        <<Control>>
+        +updateProfile(req : Request, res : Response) void
+        +validateRequest(data : ProfileDTO) boolean
+    }
+
+    class IProfile_Service {
+        <<Interface>>
+        +updateProfile(userId : string, data : ProfileDTO) MCProfile
+    }
+
+    class MCService {
+        <<DataWrapper>>
+        +updateProfile(userId : string, data : ProfileDTO) MCProfile
+    }
+
+    class MCProfileRepository {
+        <<DataAbstraction>>
+        +updateByUserId(userId : string, data : object) MCProfile
+    }
+
+    class MCProfileDTO {
+        <<DataAbstraction>>
+        -niche : string
+        -experience : number
+        -rates : object
+        -languages : string[]
+        -eventTypes : string[]
+        +fromOnboardingRequest(body : object) MCProfileDTO
+        +getNiche() string
+        +setNiche(niche : string) void
+        +getEventTypes() string[]
+        +setEventTypes(types : string[]) void
+    }
+
+    class MCProfile {
+        <<DataAbstraction>>
+        -userId : ObjectId
+        -eventTypes : string[]
+        -experience : number
+        -rates : object
+        -languages : string[]
+        -bio : string
+        +getUserId() ObjectId
+        +setEventTypes(types : string[]) void
+        +getRates() object
+        +setRates(rates : object) void
+    }
+
+    MC_Profile_View ..> MC_Controller : access
+    MC_Controller ..> IProfile_Service : uses
+    MC_Controller ..> MCProfileDTO : uses
+    IProfile_Service <|.. MCService : realizes
+    MCService ..> MCProfileRepository : uses
+    MCService ..> MCProfileDTO : uses
+    MCProfileRepository ..> MCProfile : access
+```
 
 ### 6. System High-Level Design
 
@@ -190,18 +245,68 @@ flowchart LR
 
 **Figure III-4.20** Detailed Design Classes for UC: Upload Media
 
-| Component | Detail |
-|-----------|--------|
-| **Mechanism** | No dedicated backend file upload handler. The backend solely stores URL strings received from the client. |
-| **API Endpoint** | `PUT /api/v1/mc/profile` |
-| **Request Body** | `{ media: [{ url: "https://...", type: "video" }] }` |
-| **Controller** | `mcController.updateProfile(req, res)` |
-| **Service** | `MCService.updateProfile()` — maps `media` array into `showreels` field |
-| **Repository** | `MCProfileRepository.updateByUserId()` |
-| **Database Query** | Update `showreels` array field in `MCProfile` collection |
-| **Database Field** | `showreels: [ { url: String, type: Enum['image','video'] } ]` |
-| **External Dependency** | Cloudinary / AWS S3 (client-side SDK upload only) |
-| **Response** | HTTP 200 OK with updated profile data |
+```mermaid
+classDiagram
+    class Media_Upload_View {
+        <<Boundary>>
+        +show()
+        +selectFile(file : File) void
+        +displayPreview(url : string)
+    }
+
+    class CloudStorage {
+        <<External>>
+        +upload(file : File) string
+        +getURL() string
+    }
+
+    class MC_Controller {
+        <<Control>>
+        +updateProfile(req : Request, res : Response) void
+    }
+
+    class IMedia_Service {
+        <<Interface>>
+        +updateProfile(userId : string, data : object) MCProfile
+    }
+
+    class MCService {
+        <<DataWrapper>>
+        +updateProfile(userId : string, data : object) MCProfile
+        +mapMediaToShowreels(media : MediaDTO[]) Showreel[]
+    }
+
+    class MCProfileRepository {
+        <<DataAbstraction>>
+        +updateByUserId(userId : string, data : object) MCProfile
+    }
+
+    class MediaDTO {
+        <<DataAbstraction>>
+        -url : string
+        -type : string
+        +getUrl() string
+        +getType() string
+        +setUrl(url : string) void
+        +setType(type : string) void
+    }
+
+    class MCProfile {
+        <<DataAbstraction>>
+        -userId : ObjectId
+        -showreels : Showreel[]
+        +getShowreels() Showreel[]
+        +setShowreels(showreels : Showreel[]) void
+    }
+
+    Media_Upload_View ..> CloudStorage : upload file
+    Media_Upload_View ..> MC_Controller : access
+    MC_Controller ..> IMedia_Service : uses
+    MC_Controller ..> MediaDTO : uses
+    IMedia_Service <|.. MCService : realizes
+    MCService ..> MCProfileRepository : uses
+    MCProfileRepository ..> MCProfile : access
+```
 
 ### 6. System High-Level Design
 
@@ -309,16 +414,70 @@ flowchart LR
 
 **Figure III-4.21** Detailed Design Classes for UC: View Schedule
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `GET /api/v1/mc/calendar` |
-| **Controller** | `mcController.getCalendar(req, res)` |
-| **Service** | `AvailabilityService.getAvailability(userId)` — merges and sorts both data sources |
-| **Repository 1** | `ScheduleRepository.findByMCId(userId)` → `Schedule.find({ mc: userId })` |
-| **Repository 2** | `BookingRepository.findCalendarByMCId(userId)` → `Booking.find({ mc: userId }).populate()` |
-| **Merge Logic** | Both arrays merged and sorted by date/time inside `AvailabilityService` |
-| **Data Sources** | `Schedule` model (manual slots) + `Booking` model (confirmed bookings) |
-| **Response** | HTTP 200 with unified calendar JSON array |
+```mermaid
+classDiagram
+    class Calendar_View {
+        <<Boundary>>
+        +show()
+        +renderCalendar(events : CalendarEvent[]) void
+        +displayStatus(message : string)
+    }
+
+    class MC_Controller {
+        <<Control>>
+        +getCalendar(req : Request, res : Response) void
+    }
+
+    class IAvailability_Service {
+        <<Interface>>
+        +getAvailability(userId : string) CalendarEvent[]
+    }
+
+    class AvailabilityService {
+        <<DataWrapper>>
+        +getAvailability(userId : string) CalendarEvent[]
+        +mergeAndSort(schedules : Schedule[], bookings : Booking[]) CalendarEvent[]
+    }
+
+    class ScheduleRepository {
+        <<DataAbstraction>>
+        +findByMCId(userId : string) Schedule[]
+    }
+
+    class BookingRepository {
+        <<DataAbstraction>>
+        +findCalendarByMCId(userId : string) Booking[]
+    }
+
+    class Schedule {
+        <<DataAbstraction>>
+        -mc : ObjectId
+        -date : Date
+        -startTime : string
+        -endTime : string
+        -status : string
+        +getStatus() string
+        +getDate() Date
+    }
+
+    class Booking {
+        <<DataAbstraction>>
+        -mc : ObjectId
+        -client : ObjectId
+        -date : Date
+        -status : string
+        +getStatus() string
+        +getDate() Date
+    }
+
+    Calendar_View ..> MC_Controller : access
+    MC_Controller ..> IAvailability_Service : uses
+    IAvailability_Service <|.. AvailabilityService : realizes
+    AvailabilityService ..> ScheduleRepository : uses
+    AvailabilityService ..> BookingRepository : uses
+    ScheduleRepository ..> Schedule : access
+    BookingRepository ..> Booking : access
+```
 
 ### 6. System High-Level Design
 
@@ -410,16 +569,68 @@ flowchart LR
 
 **Figure III-4.22** Detailed Design Classes for UC: Update Busy Schedule
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `POST /api/v1/mc/calendar/blockout` |
-| **Request Body** | `{ date: "2026-03-20", startTime: "09:00", endTime: "17:00" }` |
-| **Controller** | `mcController.blockDate(req, res)` |
-| **Service** | `MCService.blockDate(userId, { date, startTime, endTime })` |
-| **Repository** | `ScheduleRepository.create({ mc, date, startTime, endTime, status: 'Busy' })` |
-| **Database Query** | `Schedule.insert()` |
-| **Database Model** | `Schedule` — document created with `status = "Busy"` |
-| **Response** | HTTP 201 Created |
+```mermaid
+classDiagram
+    class BlockDate_View {
+        <<Boundary>>
+        +show()
+        +submitBlock(date : string, startTime : string, endTime : string) void
+        +displayStatus(message : string)
+    }
+
+    class MC_Controller {
+        <<Control>>
+        +blockDate(req : Request, res : Response) void
+    }
+
+    class ISchedule_Service {
+        <<Interface>>
+        +blockDate(userId : string, data : BlockDateDTO) Schedule
+    }
+
+    class MCService {
+        <<DataWrapper>>
+        +blockDate(userId : string, data : BlockDateDTO) Schedule
+    }
+
+    class ScheduleRepository {
+        <<DataAbstraction>>
+        +create(data : object) Schedule
+    }
+
+    class BlockDateDTO {
+        <<DataAbstraction>>
+        -date : string
+        -startTime : string
+        -endTime : string
+        +getDate() string
+        +getStartTime() string
+        +getEndTime() string
+        +setDate(date : string) void
+        +setStartTime(time : string) void
+        +setEndTime(time : string) void
+    }
+
+    class Schedule {
+        <<DataAbstraction>>
+        -mc : ObjectId
+        -date : Date
+        -startTime : string
+        -endTime : string
+        -status : string
+        +getStatus() string
+        +setStatus(status : string) void
+        +getMC() ObjectId
+    }
+
+    BlockDate_View ..> MC_Controller : access
+    MC_Controller ..> ISchedule_Service : uses
+    MC_Controller ..> BlockDateDTO : uses
+    ISchedule_Service <|.. MCService : realizes
+    MCService ..> ScheduleRepository : uses
+    MCService ..> BlockDateDTO : uses
+    ScheduleRepository ..> Schedule : access
+```
 
 ### 6. System High-Level Design
 
@@ -510,17 +721,68 @@ flowchart LR
 
 **Figure III-4.23** Detailed Design Classes for UC: Set Availability Status
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `POST /api/v1/availability` |
-| **Request Body** | `{ isAvailable: true/false, date: "...", startTime: "...", endTime: "..." }` |
-| **Controller** | `availabilityController.createAvailability(req, res)` |
-| **Service** | `AvailabilityService.createAvailability(userId, slotData)` |
-| **Business Logic** | `status = isAvailable ? "Available" : "Busy"` (computed inside Service) |
-| **Repository** | `ScheduleRepository.create({ mc, date, status, startTime, endTime })` |
-| **Database Query** | `Schedule.insert()` |
-| **Database Model** | `Schedule` — status determined by `isAvailable` boolean from frontend |
-| **Response** | HTTP 201 Created |
+```mermaid
+classDiagram
+    class Availability_View {
+        <<Boundary>>
+        +show()
+        +toggleSlot(isAvailable : boolean) void
+        +displaySlots(slots : Schedule[]) void
+    }
+
+    class Availability_Controller {
+        <<Control>>
+        +createAvailability(req : Request, res : Response) void
+    }
+
+    class IAvailability_Service {
+        <<Interface>>
+        +createAvailability(userId : string, data : AvailabilityDTO) Schedule
+    }
+
+    class AvailabilityService {
+        <<DataWrapper>>
+        +createAvailability(userId : string, data : AvailabilityDTO) Schedule
+        +computeStatus(isAvailable : boolean) string
+    }
+
+    class ScheduleRepository {
+        <<DataAbstraction>>
+        +create(data : object) Schedule
+    }
+
+    class AvailabilityDTO {
+        <<DataAbstraction>>
+        -isAvailable : boolean
+        -date : string
+        -startTime : string
+        -endTime : string
+        +getIsAvailable() boolean
+        +setIsAvailable(val : boolean) void
+        +getDate() string
+        +setDate(date : string) void
+    }
+
+    class Schedule {
+        <<DataAbstraction>>
+        -mc : ObjectId
+        -date : Date
+        -startTime : string
+        -endTime : string
+        -status : string
+        +getStatus() string
+        +setStatus(status : string) void
+        +getMC() ObjectId
+    }
+
+    Availability_View ..> Availability_Controller : access
+    Availability_Controller ..> IAvailability_Service : uses
+    Availability_Controller ..> AvailabilityDTO : uses
+    IAvailability_Service <|.. AvailabilityService : realizes
+    AvailabilityService ..> ScheduleRepository : uses
+    AvailabilityService ..> AvailabilityDTO : uses
+    ScheduleRepository ..> Schedule : access
+```
 
 ### 6. System High-Level Design
 
@@ -609,15 +871,55 @@ flowchart LR
 
 **Figure III-4.32** Detailed Design Classes for UC: View Users Lists
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `GET /api/v1/admin/users` |
-| **Controller** | `adminController.getAllUsers(req, res)` |
-| **Service** | `UserService.getAllUsers()` |
-| **Repository** | `UserRepository.findAll()` |
-| **Database Query** | `User.find()` — fetches all registered users (all roles) |
-| **Business Logic** | No complex filtering; data rendering is managed by the client-side DataGrid table |
-| **Response** | HTTP 200 `{ status: 'success', data: { users } }` |
+```mermaid
+classDiagram
+    class UserList_View {
+        <<Boundary>>
+        +show()
+        +renderTable(users : User[]) void
+        +displayStatus(message : string)
+    }
+
+    class Admin_Controller {
+        <<Control>>
+        +getAllUsers(req : Request, res : Response) void
+    }
+
+    class IUser_Service {
+        <<Interface>>
+        +getAllUsers() User[]
+    }
+
+    class UserService {
+        <<DataWrapper>>
+        +getAllUsers() User[]
+    }
+
+    class UserRepository {
+        <<DataAbstraction>>
+        +findAll() User[]
+    }
+
+    class User {
+        <<DataAbstraction>>
+        -userId : ObjectId
+        -email : string
+        -name : string
+        -role : string
+        -isActive : boolean
+        -isVerified : boolean
+        +getEmail() string
+        +getRole() string
+        +getIsActive() boolean
+        +getIsVerified() boolean
+    }
+
+    UserList_View ..> Admin_Controller : access
+    Admin_Controller ..> IUser_Service : uses
+    IUser_Service <|.. UserService : realizes
+    UserService ..> UserRepository : uses
+    UserRepository ..> User : access
+```
 
 ### 6. System High-Level Design
 
@@ -711,16 +1013,62 @@ flowchart LR
 
 **Figure III-4.33** Detailed Design Classes for UC: Lock/Unlock Account
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `PATCH /api/v1/admin/users/:id` |
-| **Request Body** | `{ isActive: true / false }` |
-| **Controller** | `adminController.updateUserStatus(req, res)` |
-| **Service** | `UserService.updateUserStatus(id, { isActive })` |
-| **Repository** | `UserRepository.updateById(id, { isActive })` |
-| **Database Query** | `User.findByIdAndUpdate(id, { isActive }, { new: true })` |
-| **Target Field** | `isActive` boolean on the `User` schema |
-| **Response** | HTTP 200 `{ data: { user } }` on success · HTTP 404 if user not found |
+```mermaid
+classDiagram
+    class LockUnlock_View {
+        <<Boundary>>
+        +show()
+        +toggleSwitch(userId : string, isActive : boolean) void
+        +displayNotification(message : string)
+    }
+
+    class Admin_Controller {
+        <<Control>>
+        +updateUserStatus(req : Request, res : Response) void
+        +validateRequest(id : string, body : StatusDTO) boolean
+    }
+
+    class IUser_Service {
+        <<Interface>>
+        +updateUserStatus(id : string, data : StatusDTO) User
+    }
+
+    class UserService {
+        <<DataWrapper>>
+        +updateUserStatus(id : string, data : StatusDTO) User
+    }
+
+    class UserRepository {
+        <<DataAbstraction>>
+        +updateById(id : string, data : object) User
+    }
+
+    class StatusDTO {
+        <<DataAbstraction>>
+        -isActive : boolean
+        +getIsActive() boolean
+        +setIsActive(val : boolean) void
+    }
+
+    class User {
+        <<DataAbstraction>>
+        -userId : ObjectId
+        -email : string
+        -isActive : boolean
+        -isVerified : boolean
+        +getIsActive() boolean
+        +setIsActive(val : boolean) void
+        +getEmail() string
+    }
+
+    LockUnlock_View ..> Admin_Controller : access
+    Admin_Controller ..> IUser_Service : uses
+    Admin_Controller ..> StatusDTO : uses
+    IUser_Service <|.. UserService : realizes
+    UserService ..> UserRepository : uses
+    UserService ..> StatusDTO : uses
+    UserRepository ..> User : access
+```
 
 ### 6. System High-Level Design
 
@@ -812,17 +1160,62 @@ flowchart LR
 
 **Figure III-4.34** Detailed Design Classes for UC: Verify MC
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `PATCH /api/v1/admin/users/:id` |
-| **Request Body** | `{ isVerified: true }` |
-| **Controller** | `adminController.updateUserStatus(req, res)` |
-| **Service** | `UserService.updateUserStatus(id, { isVerified })` |
-| **Repository** | `UserRepository.updateById(id, { isVerified })` |
-| **Database Query** | `User.findByIdAndUpdate(id, { isVerified }, { new: true })` |
-| **Target Field** | `isVerified` boolean on the `User` schema |
-| **Note** | Uses the same endpoint and controller method as UC33 but targets `isVerified` instead of `isActive` |
-| **Response** | HTTP 200 `{ data: { user } }` on success · HTTP 404 if user not found |
+```mermaid
+classDiagram
+    class VerifyMC_View {
+        <<Boundary>>
+        +show()
+        +clickVerify(userId : string) void
+        +displayBadge(isVerified : boolean)
+    }
+
+    class Admin_Controller {
+        <<Control>>
+        +updateUserStatus(req : Request, res : Response) void
+        +validateRequest(id : string, body : VerifyDTO) boolean
+    }
+
+    class IUser_Service {
+        <<Interface>>
+        +updateUserStatus(id : string, data : VerifyDTO) User
+    }
+
+    class UserService {
+        <<DataWrapper>>
+        +updateUserStatus(id : string, data : VerifyDTO) User
+    }
+
+    class UserRepository {
+        <<DataAbstraction>>
+        +updateById(id : string, data : object) User
+    }
+
+    class VerifyDTO {
+        <<DataAbstraction>>
+        -isVerified : boolean
+        +getIsVerified() boolean
+        +setIsVerified(val : boolean) void
+    }
+
+    class User {
+        <<DataAbstraction>>
+        -userId : ObjectId
+        -email : string
+        -role : string
+        -isVerified : boolean
+        +getIsVerified() boolean
+        +setIsVerified(val : boolean) void
+        +getRole() string
+    }
+
+    VerifyMC_View ..> Admin_Controller : access
+    Admin_Controller ..> IUser_Service : uses
+    Admin_Controller ..> VerifyDTO : uses
+    IUser_Service <|.. UserService : realizes
+    UserService ..> UserRepository : uses
+    UserService ..> VerifyDTO : uses
+    UserRepository ..> User : access
+```
 
 ### 6. System High-Level Design
 
@@ -908,15 +1301,66 @@ flowchart LR
 
 **Figure III-4.36** Detailed Design Classes for UC: View All Bookings
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `GET /api/v1/admin/bookings` |
-| **Controller** | `adminController.getAllBookings(req, res)` |
-| **Service** | `BookingService.getAllBookings()` |
-| **Repository** | `BookingRepository.findAll()` |
-| **Database Query** | `Booking.find().populate('mc').populate('client')` |
-| **Population** | Nested MC and Client user records (name, email) are populated into each Booking document |
-| **Response** | HTTP 200 `{ bookings }` with fully populated booking array |
+```mermaid
+classDiagram
+    class BookingList_View {
+        <<Boundary>>
+        +show()
+        +renderTable(bookings : Booking[]) void
+        +displayStatus(message : string)
+    }
+
+    class Admin_Controller {
+        <<Control>>
+        +getAllBookings(req : Request, res : Response) void
+    }
+
+    class IBooking_Service {
+        <<Interface>>
+        +getAllBookings() Booking[]
+    }
+
+    class BookingService {
+        <<DataWrapper>>
+        +getAllBookings() Booking[]
+    }
+
+    class BookingRepository {
+        <<DataAbstraction>>
+        +findAll() Booking[]
+    }
+
+    class Booking {
+        <<DataAbstraction>>
+        -bookingId : ObjectId
+        -mc : ObjectId
+        -client : ObjectId
+        -date : Date
+        -status : string
+        -amount : number
+        +getMC() ObjectId
+        +getClient() ObjectId
+        +getStatus() string
+        +getAmount() number
+    }
+
+    class User {
+        <<DataAbstraction>>
+        -userId : ObjectId
+        -name : string
+        -email : string
+        +getName() string
+        +getEmail() string
+    }
+
+    BookingList_View ..> Admin_Controller : access
+    Admin_Controller ..> IBooking_Service : uses
+    IBooking_Service <|.. BookingService : realizes
+    BookingService ..> BookingRepository : uses
+    BookingRepository ..> Booking : access
+    Booking ..> User : populate mc
+    Booking ..> User : populate client
+```
 
 ### 6. System High-Level Design
 
@@ -1018,17 +1462,81 @@ flowchart LR
 
 **Figure III-4.37** Detailed Design Classes for UC: Resolve Disputes
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `POST /api/v1/admin/disputes/:id/resolve` *(Theoretical)* |
-| **Request Body** | `{ decision: "Refund" / "Payout" / "Penalty" }` |
-| **Controller** | `disputeController.resolveDispute(req, res)` |
-| **Service** | `DisputeService.processResolution(disputeId, decision)` |
-| **Repository 1** | `DisputeRepository.updateDisputeStatus(disputeId, 'Resolved', decision)` → `Dispute.findByIdAndUpdate()` |
-| **Repository 2** | `BookingRepository.updateStatus(bookingId, decisionState)` → `Booking.findByIdAndUpdate()` *(optional branch)* |
-| **Optional Branch** | Booking status update only triggered when `decision = Refund` or `Penalty` |
-| **Dispute Model** | Fields: `bookingId`, `reportedBy`, `reason`, `evidenceUrls`, `status: ['Pending','UnderReview','Resolved']`, `decision` |
-| **Response** | HTTP 200 `{ status: 'success', data }` |
+```mermaid
+classDiagram
+    class Dispute_View {
+        <<Boundary>>
+        +show()
+        +submitDecision(disputeId : string, decision : string) void
+        +displayResult(message : string)
+    }
+
+    class Dispute_Controller {
+        <<Control>>
+        +resolveDispute(req : Request, res : Response) void
+        +validateRequest(id : string, body : DecisionDTO) boolean
+    }
+
+    class IDispute_Service {
+        <<Interface>>
+        +processResolution(disputeId : string, decision : string) object
+    }
+
+    class DisputeService {
+        <<DataWrapper>>
+        +processResolution(disputeId : string, decision : string) object
+        +cascadeToBooking(bookingId : string, decisionState : string) void
+    }
+
+    class DisputeRepository {
+        <<DataAbstraction>>
+        +updateDisputeStatus(id : string, status : string, decision : string) Dispute
+    }
+
+    class BookingRepository {
+        <<DataAbstraction>>
+        +updateStatus(bookingId : string, status : string) Booking
+    }
+
+    class DecisionDTO {
+        <<DataAbstraction>>
+        -decision : string
+        +getDecision() string
+        +setDecision(decision : string) void
+    }
+
+    class Dispute {
+        <<DataAbstraction>>
+        -disputeId : ObjectId
+        -bookingId : ObjectId
+        -reportedBy : ObjectId
+        -reason : string
+        -evidenceUrls : string[]
+        -status : string
+        -decision : string
+        +getStatus() string
+        +setStatus(status : string) void
+        +getDecision() string
+        +setDecision(decision : string) void
+    }
+
+    class Booking {
+        <<DataAbstraction>>
+        -bookingId : ObjectId
+        -status : string
+        +getStatus() string
+        +setStatus(status : string) void
+    }
+
+    Dispute_View ..> Dispute_Controller : access
+    Dispute_Controller ..> IDispute_Service : uses
+    Dispute_Controller ..> DecisionDTO : uses
+    IDispute_Service <|.. DisputeService : realizes
+    DisputeService ..> DisputeRepository : uses
+    DisputeService ..> BookingRepository : uses
+    DisputeRepository ..> Dispute : access
+    BookingRepository ..> Booking : access
+```
 
 ### 6. System High-Level Design
 
@@ -1124,15 +1632,67 @@ flowchart LR
 
 **Figure III-4.38** Detailed Design Classes for UC: View All Transactions
 
-| Component | Detail |
-|-----------|--------|
-| **API Endpoint** | `GET /api/v1/admin/transactions` |
-| **Controller** | `adminController.getAllTransactions(req, res)` |
-| **Service** | `TransactionService.getAllTransactions()` |
-| **Repository** | `TransactionRepository.findAll()` |
-| **Database Query** | `Transaction.find().populate('mc').populate('client')` |
-| **Population** | Retrieves `client` and `mc` name/email to provide context for each financial record |
-| **Response** | HTTP 200 `{ data: { transactions } }` with populated transaction array |
+```mermaid
+classDiagram
+    class Transaction_View {
+        <<Boundary>>
+        +show()
+        +renderList(transactions : Transaction[]) void
+        +displayStatus(message : string)
+    }
+
+    class Admin_Controller {
+        <<Control>>
+        +getAllTransactions(req : Request, res : Response) void
+    }
+
+    class ITransaction_Service {
+        <<Interface>>
+        +getAllTransactions() Transaction[]
+    }
+
+    class TransactionService {
+        <<DataWrapper>>
+        +getAllTransactions() Transaction[]
+    }
+
+    class TransactionRepository {
+        <<DataAbstraction>>
+        +findAll() Transaction[]
+    }
+
+    class Transaction {
+        <<DataAbstraction>>
+        -transactionId : ObjectId
+        -mc : ObjectId
+        -client : ObjectId
+        -amount : number
+        -type : string
+        -status : string
+        -createdAt : Date
+        +getMC() ObjectId
+        +getClient() ObjectId
+        +getAmount() number
+        +getStatus() string
+    }
+
+    class User {
+        <<DataAbstraction>>
+        -userId : ObjectId
+        -name : string
+        -email : string
+        +getName() string
+        +getEmail() string
+    }
+
+    Transaction_View ..> Admin_Controller : access
+    Admin_Controller ..> ITransaction_Service : uses
+    ITransaction_Service <|.. TransactionService : realizes
+    TransactionService ..> TransactionRepository : uses
+    TransactionRepository ..> Transaction : access
+    Transaction ..> User : populate mc
+    Transaction ..> User : populate client
+```
 
 ### 6. System High-Level Design
 
